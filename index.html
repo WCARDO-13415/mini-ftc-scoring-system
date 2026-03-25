@@ -1,10 +1,123 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Mini FTC Scoring System</title>
+    <title>Electric Storm Summer Camp Scoring</title>
+    <meta charset="UTF-8">
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        background: #050816;
+        color: #f5f5f5;
+      }
+      header {
+        background: #0b1020;
+        border-bottom: 2px solid #22d3ee;
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #22d3ee;
+      }
+      nav a {
+        color: #e5e7eb;
+        text-decoration: none;
+        margin-left: 1rem;
+        font-size: 0.95rem;
+      }
+      nav a:hover {
+        color: #22d3ee;
+        text-decoration: underline;
+      }
+      main {
+        padding: 2rem 1.5rem;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+      }
+      .card {
+        background: #0b1020;
+        border: 1px solid #1f2937;
+        border-radius: 0.5rem;
+        padding: 1rem 1.25rem;
+      }
+      .card h2 {
+        margin-top: 0;
+        font-size: 1.1rem;
+        color: #22d3ee;
+      }
+      .card p {
+        font-size: 0.9rem;
+        color: #d1d5db;
+      }
+      .card a {
+        display: inline-block;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        color: #22d3ee;
+        text-decoration: none;
+      }
+      .card a:hover {
+        text-decoration: underline;
+      }
+    </style>
   </head>
   <body>
-    <h1>Welcome to the Mini FTC Scoring System</h1>
-    <p>This is the beginning of your custom scoring system.</p>
+    <header>
+      <div class="brand">Electric Storm Scoring</div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="scorekeeper.html">Scorekeeper</a>
+        <a href="audience.html">Audience Display</a>
+        <a href="rankings.html">Rankings</a>
+        <a href="matches.html">Matches</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1>Summer Camp Scoring System</h1>
+      <p>
+        Use this hub to move between all the views needed to run matches at camp.
+        Open each page on the device that will use it.
+      </p>
+
+      <div class="card-grid">
+        <div class="card">
+          <h2>Scorekeeper</h2>
+          <p>Buttons and controls for the person running the match and entering scores.</p>
+          <a href="scorekeeper.html">Open scorekeeper →</a>
+        </div>
+
+        <div class="card">
+          <h2>Audience Display</h2>
+          <p>Big-screen view for spectators: scores, timers, and match status.</p>
+          <a href="audience.html">Open audience display →</a>
+        </div>
+
+        <div class="card">
+          <h2>Rankings</h2>
+          <p>Live team rankings across the event once you add storage/logic.</p>
+          <a href="rankings.html">Open rankings →</a>
+        </div>
+
+        <div class="card">
+          <h2>Matches</h2>
+          <p>Match list, results, and schedule for the event.</p>
+          <a href="matches.html">Open matches →</a>
+        </div>
+      </div>
+    </main>
   </body>
 </html>
