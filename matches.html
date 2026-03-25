@@ -243,20 +243,6 @@ function importTeams() {
 }
  
 
-
-      reader.onload = function(e) {
-        teams.push({
-          id: Date.now(),
-          name: name,
-          avatar: e.target.result
-        });
-
-        localStorage.setItem("teams", JSON.stringify(teams));
-        renderTeams();
-      };
-      reader.readAsDataURL(file);
-    }
-
     renderTeams();
   </script>
 </body>
