@@ -97,6 +97,14 @@
       <h2>Teams</h2>
       <div id="teamList" class="team-list"></div>
     </div>
+
+    <div class="card">
+      <h2>Event Data</h2>
+      <button onclick="exportTeams()">Export Teams</button>
+      <input type="file" id="importFile" accept=".json" style="margin-top:1rem;">
+      <button onclick="importTeams()">Import Teams</button>
+    </div>
+
   </main>
 
   <script>
@@ -112,21 +120,130 @@
         div.innerHTML = `
           <img src="${team.avatar}">
           <strong>${team.name}</strong>
+          <button onclick="editTeam(${team.id})">Edit</button>
+          <button onclick="deleteTeam(${team.id})">Delete</button>
         `;
+
         list.appendChild(div);
       });
     }
 
     function addTeam() {
-      const name = document.getElementById("teamName").value;
-      const file = document.getElementById("teamAvatar").files[0];
+  const name = document.getElementById("teamName").value.trim();
+  const file = document.getElementById("teamAvatar").files[0];
 
-      if (!name || !file) {
-        alert("Please enter a name and choose an avatar.");
-        return;
-      }
+  if (!name || !file) {
+    alert("Please enter a name and choose an avatar.");
+    return;
+  }
 
+  // Duplicate check (case-insensitive)
+  const exists = teams.some(team => team.name.toLowerCase() === name.toLowerCase());
+  if (exists) {
+    alert("A team with that name already exists.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    teams.push({
+      id: Date.now(),
+      name: name,
+      avatar: e.target.result
+    });
+
+    localStorage.setItem("teams", JSON.stringify(teams));
+    renderTeams();
+  };
+  reader.readAsDataURL(file);
+}
+    function editTeam(id) {
+  const team = teams.find(t => t.id === id);
+  if (!team) return;
+
+  const newName = prompt("Enter new team name:", team.name);
+  if (!newName) return;
+
+  // Prevent duplicate names
+  const exists = teams.some(t => t.name.toLowerCase() === newName.toLowerCase() && t.id !== id);
+  if (exists) {
+    alert("A team with that name already exists.");
+    return;
+  }
+
+  team.name = newName;
+
+  // Optional: replace avatar
+  const changeAvatar = confirm("Change avatar?");
+  if (changeAvatar) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = e => {
+      const file = e.target.files[0];
       const reader = new FileReader();
+      reader.onload = ev => {
+        team.avatar = ev.target.result;
+        localStorage.setItem("teams", JSON.stringify(teams));
+        renderTeams();
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  } else {
+    localStorage.setItem("teams", JSON.stringify(teams));
+    renderTeams();
+  }
+}
+
+function deleteTeam(id) {
+  if (!confirm("Delete this team?")) return;
+  teams = teams.filter(t => t.id !== id);
+  localStorage.setItem("teams", JSON.stringify(teams));
+  renderTeams();
+}
+   function exportTeams() {
+  const data = JSON.stringify(teams, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "teams.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function importTeams() {
+  const fileInput = document.getElementById("importFile");
+  const file = fileInput.files[0];
+  if (!file) {
+    alert("Choose a JSON file first.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+
+      // Validate structure
+      if (!Array.isArray(imported)) throw "Invalid format";
+
+      teams = imported;
+      localStorage.setItem("teams", JSON.stringify(teams));
+      renderTeams();
+      alert("Teams imported successfully.");
+    } catch (err) {
+      alert("Invalid JSON file.");
+    }
+  };
+  reader.readAsText(file);
+}
+ 
+
+
       reader.onload = function(e) {
         teams.push({
           id: Date.now(),
