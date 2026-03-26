@@ -122,33 +122,49 @@
       teams.forEach(team => {
         const div = document.createElement("div");
         div.className = "team-item";
-        div.innerHTML = `
-          <img src="${team.avatar}">
-          <strong>${team.name}</strong>
-          <button onclick="editTeam(${team.id})">Edit</button>
-          <button onclick="deleteTeam(${team.id})">Delete</button>
-        `;
+       div.innerHTML = `
+        const avatar = team.avatar && team.avatar !== "" 
+          ? team.avatar 
+          : "images/default-avatar.png";
+        <strong>${team.name}</strong>
+        <button onclick="editTeam(${team.id})">Edit</button>
+        <button onclick="deleteTeam(${team.id})">Delete</button>
+      `;
 
         list.appendChild(div);
       });
     }
 
-    function addTeam() {
+   function addTeam() {
   const name = document.getElementById("teamName").value.trim();
   const file = document.getElementById("teamAvatar").files[0];
 
-  if (!name || !file) {
-    alert("Please enter a name and choose an avatar.");
+  if (!name) {
+    alert("Please enter a team name.");
     return;
   }
 
-  // Duplicate check (case-insensitive)
+  // Duplicate check
   const exists = teams.some(team => team.name.toLowerCase() === name.toLowerCase());
   if (exists) {
     alert("A team with that name already exists.");
     return;
   }
 
+  // If no avatar uploaded → use default decal
+  if (!file) {
+    teams.push({
+      id: Date.now(),
+      name: name,
+      avatar: "images/default-avatar.png"
+    });
+
+    localStorage.setItem("teams", JSON.stringify(teams));
+    renderTeams();
+    return;
+  }
+
+  // If avatar uploaded → read it normally
   const reader = new FileReader();
   reader.onload = function(e) {
     teams.push({
@@ -162,7 +178,8 @@
   };
   reader.readAsDataURL(file);
 }
-    function editTeam(id) {
+
+   function editTeam(id) {
   const team = teams.find(t => t.id === id);
   if (!team) return;
 
@@ -186,6 +203,15 @@
     input.accept = "image/*";
     input.onchange = e => {
       const file = e.target.files[0];
+
+      // ⭐ THIS IS STEP 4 — the correct spot
+      if (!file) {
+        team.avatar = "images/default-avatar.png";
+        localStorage.setItem("teams", JSON.stringify(teams));
+        renderTeams();
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = ev => {
         team.avatar = ev.target.result;
@@ -200,6 +226,7 @@
     renderTeams();
   }
 }
+
 
 function deleteTeam(id) {
   if (!confirm("Delete this team?")) return;
