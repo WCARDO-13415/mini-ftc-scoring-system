@@ -330,6 +330,10 @@
        MANUAL MATCH ADD
     ============================ */
     function addManualMatch() {
+      if (!requirePasscode()) {
+        alert("Incorrect passcode.");
+        return;
+      }
       const red = parseInt(document.getElementById("redTeam").value);
       const blue = parseInt(document.getElementById("blueTeam").value);
 
@@ -352,6 +356,10 @@
        FTC-STYLE AUTO SCHEDULER
     ============================ */
     function generateSchedule() {
+      if (!requirePasscode()) {
+        alert("Incorrect passcode.");
+        return;
+      }
       if (teams.length < 4) {
         alert("You need at least 4 teams to generate a 2v2 schedule.");
         return;
@@ -435,6 +443,10 @@
        DELETE MATCH
     ============================ */
     function deleteMatch(num) {
+      if (!requirePasscode()) {
+        alert("Incorrect passcode.");
+        return;
+      }
       matches = matches.filter(m => m.matchNumber !== num);
       matches.forEach((m, i) => m.matchNumber = i + 1);
       localStorage.setItem("matches", JSON.stringify(matches));
