@@ -289,6 +289,63 @@
     }
 
     /* ============================
+       ROBUST GROUP FINDER
+    ============================ */
+    function findValidGroup(shuffled, partners, opponents, matches) {
+      const allTeams = shuffled.map(t => t.id);
+
+      // Generate ALL combinations of 4 teams
+      const combos = [];
+      for (let i = 0; i < allTeams.length; i++) {
+        for (let j = i + 1; j < allTeams.length; j++) {
+          for (let k = j + 1; k < allTeams.length; k++) {
+            for (let l = k + 1; l < allTeams.length; l++) {
+              combos.push([allTeams[i], allTeams[j], allTeams[k], allTeams[l]]);
+            }
+          }
+        }
+      }
+
+      // Shuffle combinations
+      for (let i = combos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combos[i], combos[j]] = [combos[j], combos[i]];
+      }
+
+      // Try each combination
+      for (const combo of combos) {
+        const [a, b, c, d] = combo;
+
+        // Avoid repeated partners
+        if (partners[a].has(b)) continue;
+        if (partners[c].has(d)) continue;
+
+        // Avoid repeated opponents
+        if (opponents[a].has(c) || opponents[a].has(d)) continue;
+        if (opponents[b].has(c) || opponents[b].has(d)) continue;
+
+        // Avoid back-to-back matches
+        if (matches.length > 0) {
+          const last = matches[matches.length - 1];
+          const lastTeams = new Set([last.red1, last.red2, last.blue1, last.blue2]);
+
+          if (
+            lastTeams.has(a) ||
+            lastTeams.has(b) ||
+            lastTeams.has(c) ||
+            lastTeams.has(d)
+          ) {
+            continue;
+          }
+        }
+
+        return combo; // Valid group found
+      }
+
+      return null; // No valid group found
+    }
+
+    /* ============================
        FTC-STYLE AUTO SCHEDULER
     ============================ */
     function generateSchedule() {
@@ -328,44 +385,15 @@
       for (let m = 0; m < totalMatches; m++) {
         shuffle(shuffled);
 
-        let group = null;
-
-        for (let i = 0; i < shuffled.length - 3; i++) {
-  const g = shuffled.slice(i, i + 4);
-  const [a, b, c, d] = g.map(t => t.id);
-
-  // 1. Avoid repeated partners
-  if (partners[a].has(b)) continue;
-  if (partners[c].has(d)) continue;
-
-  // 2. Avoid repeated opponents
-  if (opponents[a].has(c) || opponents[a].has(d)) continue;
-  if (opponents[b].has(c) || opponents[b].has(d)) continue;
-
-  // 3. Avoid double-headers (no back-to-back matches)
-  if (matches.length > 0) {
-    const last = matches[matches.length - 1];
-    const lastTeams = new Set([last.red1, last.red2, last.blue1, last.blue2]);
-
-    if (
-      lastTeams.has(a) ||
-      lastTeams.has(b) ||
-      lastTeams.has(c) ||
-      lastTeams.has(d)
-    ) {
-      continue;
-    }
-  }
-
-  group = g;
-  break;
-}
+        let group = findValidGroup(shuffled, partners, opponents, matches);
+        let surrogate = false;
 
         if (!group) {
-          group = shuffled.slice(0, 4);
+          group = shuffled.slice(0, 4).map(t => t.id);
+          surrogate = true;
         }
 
-        const [t1, t2, t3, t4] = group.map(t => t.id);
+        const [t1, t2, t3, t4] = group;
 
         partners[t1].add(t2);
         partners[t2].add(t1);
@@ -387,7 +415,7 @@
           red2: t2,
           blue1: t3,
           blue2: t4,
-          surrogate: false
+          surrogate
         });
       }
 
