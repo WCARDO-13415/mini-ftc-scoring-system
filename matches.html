@@ -43,7 +43,7 @@
       margin-bottom: 1.5rem;
       border: 1px solid #1f2937;
     }
-    input, button {
+    input, button, select {
       padding: 0.5rem;
       margin-top: 0.5rem;
       border-radius: 6px;
@@ -91,6 +91,7 @@
   <main>
     <h1>Teams & Matches</h1>
 
+    <!-- ADD TEAM -->
     <div class="card">
       <h2>Add a Team</h2>
       <input id="teamName" placeholder="Team Name">
@@ -98,26 +99,31 @@
       <button onclick="addTeam()">Add Team</button>
     </div>
 
+    <!-- TEAM LIST -->
     <div class="card">
       <h2>Teams</h2>
       <div id="teamList" class="team-list"></div>
     </div>
-<div class="card">
-  <h2>Match Schedule</h2>
 
-  <div>
-    <label>Red Alliance:</label>
-    <select id="redTeam"></select>
+    <!-- MATCH SCHEDULE -->
+    <div class="card">
+      <h2>Match Schedule</h2>
 
-    <label>Blue Alliance:</label>
-    <select id="blueTeam"></select>
+      <div>
+        <label>Red Alliance:</label>
+        <select id="redTeam"></select>
 
-    <button onclick="addMatch()">Add Match</button>
-  </div>
+        <label>Blue Alliance:</label>
+        <select id="blueTeam"></select>
 
-  <div id="matchList" class="team-list"></div>
-</div>
+        <button onclick="addManualMatch()">Add Match</button>
+        <button onclick="generateSchedule()">Generate Match Schedule</button>
+      </div>
 
+      <div id="matchList" class="team-list"></div>
+    </div>
+
+    <!-- EVENT DATA -->
     <div class="card">
       <h2>Event Data</h2>
       <button onclick="exportTeams()">Export Teams</button>
@@ -128,16 +134,22 @@
   </main>
 
   <script>
+    /* ============================
+       TEAM STORAGE + PASSCODE
+    ============================ */
     let teams = JSON.parse(localStorage.getItem("teams")) || [];
+    let matches = JSON.parse(localStorage.getItem("matches")) || [];
 
-    // ⭐ Passcode system
-const PASSCODE = "13415"; // Change this if you want
+    const PASSCODE = "13415";
 
-function requirePasscode() {
-  const entered = prompt("Enter passcode to edit:");
-  return entered === PASSCODE;
-}
+    function requirePasscode() {
+      const entered = prompt("Enter passcode to edit:");
+      return entered === PASSCODE;
+    }
 
+    /* ============================
+       TEAM RENDERING
+    ============================ */
     function renderTeams() {
       const list = document.getElementById("teamList");
       list.innerHTML = "";
@@ -146,7 +158,6 @@ function requirePasscode() {
         const div = document.createElement("div");
         div.className = "team-item";
 
-        // ⭐ Correct fallback avatar logic
         const avatar = team.avatar && team.avatar !== ""
           ? team.avatar
           : "images/default-avatar.png";
@@ -162,6 +173,9 @@ function requirePasscode() {
       });
     }
 
+    /* ============================
+       TEAM ADD / EDIT / DELETE
+    ============================ */
     function addTeam() {
       const name = document.getElementById("teamName").value.trim();
       const file = document.getElementById("teamAvatar").files[0];
@@ -171,8 +185,7 @@ function requirePasscode() {
         return;
       }
 
-      const exists = teams.some(team => team.name.toLowerCase() === name.toLowerCase());
-      if (exists) {
+      if (teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
         alert("A team with that name already exists.");
         return;
       }
@@ -180,10 +193,9 @@ function requirePasscode() {
       if (!file) {
         teams.push({
           id: Date.now(),
-          name: name,
+          name,
           avatar: "images/default-avatar.png"
         });
-
         localStorage.setItem("teams", JSON.stringify(teams));
         renderTeams();
         populateTeamDropdowns();
@@ -191,61 +203,51 @@ function requirePasscode() {
       }
 
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = e => {
         teams.push({
           id: Date.now(),
-          name: name,
+          name,
           avatar: e.target.result
         });
-
         localStorage.setItem("teams", JSON.stringify(teams));
         renderTeams();
+        populateTeamDropdowns();
       };
       reader.readAsDataURL(file);
     }
 
     function editTeam(id) {
-  if (!requirePasscode()) {
-    alert("Incorrect passcode.");
-    return;
-  }
-      
+      if (!requirePasscode()) return alert("Incorrect passcode.");
+
       const team = teams.find(t => t.id === id);
       if (!team) return;
 
       const newName = prompt("Enter new team name:", team.name);
       if (!newName) return;
 
-      const exists = teams.some(t => t.name.toLowerCase() === newName.toLowerCase() && t.id !== id);
-      if (exists) {
+      if (teams.some(t => t.name.toLowerCase() === newName.toLowerCase() && t.id !== id)) {
         alert("A team with that name already exists.");
         return;
       }
 
       team.name = newName;
 
-      const changeAvatar = confirm("Change avatar?");
-      if (changeAvatar) {
+      if (confirm("Change avatar?")) {
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "image/*";
         input.onchange = e => {
           const file = e.target.files[0];
-
           if (!file) {
             team.avatar = "images/default-avatar.png";
-            localStorage.setItem("teams", JSON.stringify(teams));
-            renderTeams();
-            return;
+          } else {
+            const reader = new FileReader();
+            reader.onload = ev => team.avatar = ev.target.result;
+            reader.readAsDataURL(file);
           }
-
-          const reader = new FileReader();
-          reader.onload = ev => {
-            team.avatar = ev.target.result;
-            localStorage.setItem("teams", JSON.stringify(teams));
-            renderTeams();
-          };
-          reader.readAsDataURL(file);
+          localStorage.setItem("teams", JSON.stringify(teams));
+          renderTeams();
+          populateTeamDropdowns();
         };
         input.click();
       } else {
@@ -255,17 +257,18 @@ function requirePasscode() {
     }
 
     function deleteTeam(id) {
-      if (!requirePasscode()) {
-        alert("Incorrect passcode.");
-        return;
-      }
+      if (!requirePasscode()) return alert("Incorrect passcode.");
       if (!confirm("Delete this team?")) return;
+
       teams = teams.filter(t => t.id !== id);
       localStorage.setItem("teams", JSON.stringify(teams));
       renderTeams();
       populateTeamDropdowns();
     }
 
+    /* ============================
+       TEAM IMPORT / EXPORT
+    ============================ */
     function exportTeams() {
       const data = JSON.stringify(teams, null, 2);
       const blob = new Blob([data], { type: "application/json" });
@@ -280,106 +283,171 @@ function requirePasscode() {
     }
 
     function importTeams() {
-      const fileInput = document.getElementById("importFile");
-      const file = fileInput.files[0];
-      if (!file) {
-        alert("Choose a JSON file first.");
-        return;
-      }
+      const file = document.getElementById("importFile").files[0];
+      if (!file) return alert("Choose a JSON file first.");
 
       const reader = new FileReader();
       reader.onload = e => {
         try {
           const imported = JSON.parse(e.target.result);
-
           if (!Array.isArray(imported)) throw "Invalid format";
 
           teams = imported;
           localStorage.setItem("teams", JSON.stringify(teams));
           renderTeams();
+          populateTeamDropdowns();
           alert("Teams imported successfully.");
-        } catch (err) {
+        } catch {
           alert("Invalid JSON file.");
         }
       };
       reader.readAsText(file);
     }
-    let matches = JSON.parse(localStorage.getItem("matches")) || [];
 
-function populateTeamDropdowns() {
-  const red = document.getElementById("redTeam");
-  const blue = document.getElementById("blueTeam");
+    /* ============================
+       MATCH DROPDOWNS
+    ============================ */
+    function populateTeamDropdowns() {
+      const red = document.getElementById("redTeam");
+      const blue = document.getElementById("blueTeam");
 
-  red.innerHTML = "";
-  blue.innerHTML = "";
+      red.innerHTML = "";
+      blue.innerHTML = "";
 
-  teams.forEach(team => {
-    const option1 = document.createElement("option");
-    option1.value = team.id;
-    option1.textContent = team.name;
+      teams.forEach(team => {
+        const opt1 = document.createElement("option");
+        opt1.value = team.id;
+        opt1.textContent = team.name;
 
-    const option2 = option1.cloneNode(true);
+        const opt2 = opt1.cloneNode(true);
 
-    red.appendChild(option1);
-    blue.appendChild(option2);
-  });
-}
+        red.appendChild(opt1);
+        blue.appendChild(opt2);
+      });
+    }
 
-function addMatch() {
-  const red = document.getElementById("redTeam").value;
-  const blue = document.getElementById("blueTeam").value;
+    /* ============================
+       MANUAL MATCH ADD
+    ============================ */
+    function addManualMatch() {
+      const red = parseInt(document.getElementById("redTeam").value);
+      const blue = parseInt(document.getElementById("blueTeam").value);
 
-  if (red === blue) {
-    alert("A team cannot play against itself.");
-    return;
-  }
+      if (red === blue) return alert("A team cannot play against itself.");
 
-  matches.push({
-    matchNumber: matches.length + 1,
-    red: parseInt(red),
-    blue: parseInt(blue)
-  });
+      matches.push({
+        matchNumber: matches.length + 1,
+        red1: red,
+        red2: null,
+        blue1: blue,
+        blue2: null,
+        surrogate: false
+      });
 
-  localStorage.setItem("matches", JSON.stringify(matches));
-  renderMatches();
-}
+      localStorage.setItem("matches", JSON.stringify(matches));
+      renderMatches();
+    }
 
-function renderMatches() {
-  const list = document.getElementById("matchList");
-  list.innerHTML = "";
+    /* ============================
+       FTC-STYLE AUTO SCHEDULER
+    ============================ */
+    function generateSchedule() {
+      if (teams.length < 4) {
+        alert("You need at least 4 teams to generate a 2v2 schedule.");
+        return;
+      }
 
-  matches.forEach(match => {
-    const redTeam = teams.find(t => t.id === match.red)?.name || "Unknown";
-    const blueTeam = teams.find(t => t.id === match.blue)?.name || "Unknown";
+      const shuffled = [...teams].sort(() => Math.random() - 0.5);
+      matches = [];
+      let matchNumber = 1;
 
-    const div = document.createElement("div");
-    div.className = "team-item";
-    div.innerHTML = `
-      <strong>Match ${match.matchNumber}</strong>
-      <span style="color:#ff4d4d">${redTeam}</span> vs 
-      <span style="color:#4da6ff">${blueTeam}</span>
-      <button onclick="deleteMatch(${match.matchNumber})">Delete</button>
-    `;
+      const fullGroups = Math.floor(shuffled.length / 4);
+      const remainder = shuffled.length % 4;
 
-    list.appendChild(div);
-  });
-}
+      let index = 0;
 
-function deleteMatch(num) {
-  matches = matches.filter(m => m.matchNumber !== num);
+      for (let g = 0; g < fullGroups; g++) {
+        const group = shuffled.slice(index, index + 4);
+        index += 4;
 
-  // Re-number matches
-  matches.forEach((m, i) => m.matchNumber = i + 1);
+        matches.push({
+          matchNumber: matchNumber++,
+          red1: group[0].id,
+          red2: group[1].id,
+          blue1: group[2].id,
+          blue2: group[3].id,
+          surrogate: false
+        });
+      }
 
-  localStorage.setItem("matches", JSON.stringify(matches));
-  renderMatches();
-}
+      if (remainder > 0) {
+        const leftovers = shuffled.slice(index);
+        const needed = 4 - leftovers.length;
+        const fillers = shuffled.slice(0, needed);
 
+        const group = [...leftovers, ...fillers];
 
+        matches.push({
+          matchNumber: matchNumber++,
+          red1: group[0].id,
+          red2: group[1].id,
+          blue1: group[2].id,
+          blue2: group[3].id,
+          surrogate: true
+        });
+      }
+
+      localStorage.setItem("matches", JSON.stringify(matches));
+      renderMatches();
+    }
+
+    /* ============================
+       MATCH RENDERING
+    ============================ */
+    function renderMatches() {
+      const list = document.getElementById("matchList");
+      list.innerHTML = "";
+
+      matches.forEach(match => {
+        const r1 = teams.find(t => t.id === match.red1)?.name || "TBD";
+        const r2 = teams.find(t => t.id === match.red2)?.name || "TBD";
+        const b1 = teams.find(t => t.id === match.blue1)?.name || "TBD";
+        const b2 = teams.find(t => t.id === match.blue2)?.name || "TBD";
+
+        const surrogateTag = match.surrogate
+          ? `<span style="color:#EBF368; font-size:0.8rem;">(Surrogate Match)</span>`
+          : "";
+
+        const div = document.createElement("div");
+        div.className = "team-item";
+        div.innerHTML = `
+          <strong>Match ${match.matchNumber}</strong> ${surrogateTag}<br>
+          <span style="color:#ff4d4d">${r1} & ${r2}</span> vs 
+          <span style="color:#4da6ff">${b1} & ${b2}</span>
+          <button onclick="deleteMatch(${match.matchNumber})">Delete</button>
+        `;
+
+        list.appendChild(div);
+      });
+    }
+
+    /* ============================
+       DELETE MATCH
+    ============================ */
+    function deleteMatch(num) {
+      matches = matches.filter(m => m.matchNumber !== num);
+      matches.forEach((m, i) => m.matchNumber = i + 1);
+      localStorage.setItem("matches", JSON.stringify(matches));
+      renderMatches();
+    }
+
+    /* ============================
+       INITIAL LOAD
+    ============================ */
     renderTeams();
     populateTeamDropdowns();
     renderMatches();
-    
+
   </script>
 </body>
 </html>
