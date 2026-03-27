@@ -43,7 +43,7 @@
       margin-bottom: 1.5rem;
       border: 1px solid #1f2937;
     }
-    input, button, select {
+    input, button {
       padding: 0.5rem;
       margin-top: 0.5rem;
       border-radius: 6px;
@@ -105,20 +105,14 @@
       <div id="teamList" class="team-list"></div>
     </div>
 
-    <!-- MATCH SCHEDULE -->
+    <!-- MATCH SCHEDULER -->
     <div class="card">
       <h2>Match Schedule</h2>
 
-      <div>
-        <label>Red Alliance:</label>
-        <select id="redTeam"></select>
+      <label>Matches per team:</label>
+      <input id="matchesPerTeam" type="number" min="1" value="3">
 
-        <label>Blue Alliance:</label>
-        <select id="blueTeam"></select>
-
-        <button onclick="addManualMatch()">Add Match</button>
-        <button onclick="generateSchedule()">Generate Match Schedule</button>
-      </div>
+      <button onclick="generateSchedule()">Generate Match Schedule</button>
 
       <div id="matchList" class="team-list"></div>
     </div>
@@ -180,14 +174,10 @@
       const name = document.getElementById("teamName").value.trim();
       const file = document.getElementById("teamAvatar").files[0];
 
-      if (!name) {
-        alert("Please enter a team name.");
-        return;
-      }
+      if (!name) return alert("Please enter a team name.");
 
       if (teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
-        alert("A team with that name already exists.");
-        return;
+        return alert("A team with that name already exists.");
       }
 
       if (!file) {
@@ -198,7 +188,6 @@
         });
         localStorage.setItem("teams", JSON.stringify(teams));
         renderTeams();
-        populateTeamDropdowns();
         return;
       }
 
@@ -211,7 +200,6 @@
         });
         localStorage.setItem("teams", JSON.stringify(teams));
         renderTeams();
-        populateTeamDropdowns();
       };
       reader.readAsDataURL(file);
     }
@@ -226,8 +214,7 @@
       if (!newName) return;
 
       if (teams.some(t => t.name.toLowerCase() === newName.toLowerCase() && t.id !== id)) {
-        alert("A team with that name already exists.");
-        return;
+        return alert("A team with that name already exists.");
       }
 
       team.name = newName;
@@ -247,7 +234,6 @@
           }
           localStorage.setItem("teams", JSON.stringify(teams));
           renderTeams();
-          populateTeamDropdowns();
         };
         input.click();
       } else {
@@ -263,7 +249,6 @@
       teams = teams.filter(t => t.id !== id);
       localStorage.setItem("teams", JSON.stringify(teams));
       renderTeams();
-      populateTeamDropdowns();
     }
 
     /* ============================
@@ -295,7 +280,6 @@
           teams = imported;
           localStorage.setItem("teams", JSON.stringify(teams));
           renderTeams();
-          populateTeamDropdowns();
           alert("Teams imported successfully.");
         } catch {
           alert("Invalid JSON file.");
@@ -305,103 +289,88 @@
     }
 
     /* ============================
-       MATCH DROPDOWNS
-    ============================ */
-    function populateTeamDropdowns() {
-      const red = document.getElementById("redTeam");
-      const blue = document.getElementById("blueTeam");
-
-      red.innerHTML = "";
-      blue.innerHTML = "";
-
-      teams.forEach(team => {
-        const opt1 = document.createElement("option");
-        opt1.value = team.id;
-        opt1.textContent = team.name;
-
-        const opt2 = opt1.cloneNode(true);
-
-        red.appendChild(opt1);
-        blue.appendChild(opt2);
-      });
-    }
-
-    /* ============================
-       MANUAL MATCH ADD
-    ============================ */
-    function addManualMatch() {
-      if (!requirePasscode()) {
-        alert("Incorrect passcode.");
-        return;
-      }
-      const red = parseInt(document.getElementById("redTeam").value);
-      const blue = parseInt(document.getElementById("blueTeam").value);
-
-      if (red === blue) return alert("A team cannot play against itself.");
-
-      matches.push({
-        matchNumber: matches.length + 1,
-        red1: red,
-        red2: null,
-        blue1: blue,
-        blue2: null,
-        surrogate: false
-      });
-
-      localStorage.setItem("matches", JSON.stringify(matches));
-      renderMatches();
-    }
-
-    /* ============================
        FTC-STYLE AUTO SCHEDULER
     ============================ */
     function generateSchedule() {
-      if (!requirePasscode()) {
-        alert("Incorrect passcode.");
-        return;
-      }
-      if (teams.length < 4) {
-        alert("You need at least 4 teams to generate a 2v2 schedule.");
-        return;
+      if (!requirePasscode()) return alert("Incorrect passcode.");
+
+      const matchesPerTeam = parseInt(document.getElementById("matchesPerTeam").value);
+      if (isNaN(matchesPerTeam) || matchesPerTeam < 1) {
+        return alert("Enter a valid number of matches per team.");
       }
 
-      const shuffled = [...teams].sort(() => Math.random() - 0.5);
+      if (teams.length < 4) {
+        return alert("You need at least 4 teams to generate a 2v2 schedule.");
+      }
+
       matches = [];
       let matchNumber = 1;
 
-      const fullGroups = Math.floor(shuffled.length / 4);
-      const remainder = shuffled.length % 4;
+      const partners = {};
+      const opponents = {};
 
-      let index = 0;
+      teams.forEach(t => {
+        partners[t.id] = new Set();
+        opponents[t.id] = new Set();
+      });
 
-      for (let g = 0; g < fullGroups; g++) {
-        const group = shuffled.slice(index, index + 4);
-        index += 4;
+      const totalMatches = Math.ceil((teams.length * matchesPerTeam) / 4);
 
-        matches.push({
-          matchNumber: matchNumber++,
-          red1: group[0].id,
-          red2: group[1].id,
-          blue1: group[2].id,
-          blue2: group[3].id,
-          surrogate: false
-        });
+      const shuffled = [...teams];
+
+      function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
       }
 
-      if (remainder > 0) {
-        const leftovers = shuffled.slice(index);
-        const needed = 4 - leftovers.length;
-        const fillers = shuffled.slice(0, needed);
+      for (let m = 0; m < totalMatches; m++) {
+        shuffle(shuffled);
 
-        const group = [...leftovers, ...fillers];
+        let group = null;
+
+        for (let i = 0; i < shuffled.length - 3; i++) {
+          const g = shuffled.slice(i, i + 4);
+          const [a, b, c, d] = g.map(t => t.id);
+
+          if (partners[a].has(b)) continue;
+          if (partners[c].has(d)) continue;
+
+          if (opponents[a].has(c) || opponents[a].has(d)) continue;
+          if (opponents[b].has(c) || opponents[b].has(d)) continue;
+
+          group = g;
+          break;
+        }
+
+        if (!group) {
+          group = shuffled.slice(0, 4);
+        }
+
+        const [t1, t2, t3, t4] = group.map(t => t.id);
+
+        partners[t1].add(t2);
+        partners[t2].add(t1);
+        partners[t3].add(t4);
+        partners[t4].add(t3);
+
+        [t1, t2].forEach(r => {
+          opponents[r].add(t3);
+          opponents[r].add(t4);
+        });
+        [t3, t4].forEach(b => {
+          opponents[b].add(t1);
+          opponents[b].add(t2);
+        });
 
         matches.push({
           matchNumber: matchNumber++,
-          red1: group[0].id,
-          red2: group[1].id,
-          blue1: group[2].id,
-          blue2: group[3].id,
-          surrogate: true
+          red1: t1,
+          red2: t2,
+          blue1: t3,
+          blue2: t4,
+          surrogate: false
         });
       }
 
@@ -443,12 +412,11 @@
        DELETE MATCH
     ============================ */
     function deleteMatch(num) {
-      if (!requirePasscode()) {
-        alert("Incorrect passcode.");
-        return;
-      }
+      if (!requirePasscode()) return alert("Incorrect passcode.");
+
       matches = matches.filter(m => m.matchNumber !== num);
       matches.forEach((m, i) => m.matchNumber = i + 1);
+
       localStorage.setItem("matches", JSON.stringify(matches));
       renderMatches();
     }
@@ -457,7 +425,6 @@
        INITIAL LOAD
     ============================ */
     renderTeams();
-    populateTeamDropdowns();
     renderMatches();
 
   </script>
