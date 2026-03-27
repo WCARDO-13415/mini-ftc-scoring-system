@@ -186,6 +186,7 @@ function requirePasscode() {
 
         localStorage.setItem("teams", JSON.stringify(teams));
         renderTeams();
+        populateTeamDropdowns();
         return;
       }
 
@@ -262,6 +263,7 @@ function requirePasscode() {
       teams = teams.filter(t => t.id !== id);
       localStorage.setItem("teams", JSON.stringify(teams));
       renderTeams();
+      populateTeamDropdowns();
     }
 
     function exportTeams() {
@@ -375,6 +377,9 @@ function deleteMatch(num) {
 
 
     renderTeams();
+    populateTeamDropdowns();
+    renderMatches();
+    
   </script>
 </body>
 </html>
