@@ -102,6 +102,21 @@
       <h2>Teams</h2>
       <div id="teamList" class="team-list"></div>
     </div>
+<div class="card">
+  <h2>Match Schedule</h2>
+
+  <div>
+    <label>Red Alliance:</label>
+    <select id="redTeam"></select>
+
+    <label>Blue Alliance:</label>
+    <select id="blueTeam"></select>
+
+    <button onclick="addMatch()">Add Match</button>
+  </div>
+
+  <div id="matchList" class="team-list"></div>
+</div>
 
     <div class="card">
       <h2>Event Data</h2>
@@ -114,6 +129,14 @@
 
   <script>
     let teams = JSON.parse(localStorage.getItem("teams")) || [];
+
+    // ⭐ Passcode system
+const PASSCODE = "13415"; // Change this if you want
+
+function requirePasscode() {
+  const entered = prompt("Enter passcode to edit:");
+  return entered === PASSCODE;
+}
 
     function renderTeams() {
       const list = document.getElementById("teamList");
@@ -181,6 +204,11 @@
     }
 
     function editTeam(id) {
+  if (!requirePasscode()) {
+    alert("Incorrect passcode.");
+    return;
+  }
+      
       const team = teams.find(t => t.id === id);
       if (!team) return;
 
@@ -226,6 +254,10 @@
     }
 
     function deleteTeam(id) {
+      if (!requirePasscode()) {
+        alert("Incorrect passcode.");
+        return;
+      }
       if (!confirm("Delete this team?")) return;
       teams = teams.filter(t => t.id !== id);
       localStorage.setItem("teams", JSON.stringify(teams));
@@ -270,6 +302,77 @@
       };
       reader.readAsText(file);
     }
+    let matches = JSON.parse(localStorage.getItem("matches")) || [];
+
+function populateTeamDropdowns() {
+  const red = document.getElementById("redTeam");
+  const blue = document.getElementById("blueTeam");
+
+  red.innerHTML = "";
+  blue.innerHTML = "";
+
+  teams.forEach(team => {
+    const option1 = document.createElement("option");
+    option1.value = team.id;
+    option1.textContent = team.name;
+
+    const option2 = option1.cloneNode(true);
+
+    red.appendChild(option1);
+    blue.appendChild(option2);
+  });
+}
+
+function addMatch() {
+  const red = document.getElementById("redTeam").value;
+  const blue = document.getElementById("blueTeam").value;
+
+  if (red === blue) {
+    alert("A team cannot play against itself.");
+    return;
+  }
+
+  matches.push({
+    matchNumber: matches.length + 1,
+    red: parseInt(red),
+    blue: parseInt(blue)
+  });
+
+  localStorage.setItem("matches", JSON.stringify(matches));
+  renderMatches();
+}
+
+function renderMatches() {
+  const list = document.getElementById("matchList");
+  list.innerHTML = "";
+
+  matches.forEach(match => {
+    const redTeam = teams.find(t => t.id === match.red)?.name || "Unknown";
+    const blueTeam = teams.find(t => t.id === match.blue)?.name || "Unknown";
+
+    const div = document.createElement("div");
+    div.className = "team-item";
+    div.innerHTML = `
+      <strong>Match ${match.matchNumber}</strong>
+      <span style="color:#ff4d4d">${redTeam}</span> vs 
+      <span style="color:#4da6ff">${blueTeam}</span>
+      <button onclick="deleteMatch(${match.matchNumber})">Delete</button>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function deleteMatch(num) {
+  matches = matches.filter(m => m.matchNumber !== num);
+
+  // Re-number matches
+  matches.forEach((m, i) => m.matchNumber = i + 1);
+
+  localStorage.setItem("matches", JSON.stringify(matches));
+  renderMatches();
+}
+
 
     renderTeams();
   </script>
