@@ -331,18 +331,35 @@
         let group = null;
 
         for (let i = 0; i < shuffled.length - 3; i++) {
-          const g = shuffled.slice(i, i + 4);
-          const [a, b, c, d] = g.map(t => t.id);
+  const g = shuffled.slice(i, i + 4);
+  const [a, b, c, d] = g.map(t => t.id);
 
-          if (partners[a].has(b)) continue;
-          if (partners[c].has(d)) continue;
+  // 1. Avoid repeated partners
+  if (partners[a].has(b)) continue;
+  if (partners[c].has(d)) continue;
 
-          if (opponents[a].has(c) || opponents[a].has(d)) continue;
-          if (opponents[b].has(c) || opponents[b].has(d)) continue;
+  // 2. Avoid repeated opponents
+  if (opponents[a].has(c) || opponents[a].has(d)) continue;
+  if (opponents[b].has(c) || opponents[b].has(d)) continue;
 
-          group = g;
-          break;
-        }
+  // 3. Avoid double-headers (no back-to-back matches)
+  if (matches.length > 0) {
+    const last = matches[matches.length - 1];
+    const lastTeams = new Set([last.red1, last.red2, last.blue1, last.blue2]);
+
+    if (
+      lastTeams.has(a) ||
+      lastTeams.has(b) ||
+      lastTeams.has(c) ||
+      lastTeams.has(d)
+    ) {
+      continue;
+    }
+  }
+
+  group = g;
+  break;
+}
 
         if (!group) {
           group = shuffled.slice(0, 4);
