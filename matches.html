@@ -66,6 +66,7 @@
       align-items: center;
       gap: 1rem;
       margin-bottom: 0.75rem;
+      flex-wrap: wrap;
     }
     .team-item img {
       width: 40px;
@@ -128,9 +129,9 @@
   </main>
 
   <script>
-    /* ============================
-       TEAM STORAGE + PASSCODE
-    ============================ */
+    // ============================
+    // TEAM STORAGE + PASSCODE
+    // ============================
     let teams = JSON.parse(localStorage.getItem("teams")) || [];
     let matches = JSON.parse(localStorage.getItem("matches")) || [];
 
@@ -141,9 +142,9 @@
       return entered === PASSCODE;
     }
 
-    /* ============================
-       TEAM RENDERING
-    ============================ */
+    // ============================
+    // TEAM RENDERING
+    // ============================
     function renderTeams() {
       const list = document.getElementById("teamList");
       list.innerHTML = "";
@@ -167,17 +168,21 @@
       });
     }
 
-    /* ============================
-       TEAM ADD / EDIT / DELETE
-    ============================ */
+    // ============================
+    // TEAM ADD / EDIT / DELETE
+    // ============================
     function addTeam() {
       const name = document.getElementById("teamName").value.trim();
       const file = document.getElementById("teamAvatar").files[0];
 
-      if (!name) return alert("Please enter a team name.");
+      if (!name) {
+        alert("Please enter a team name.");
+        return;
+      }
 
       if (teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
-        return alert("A team with that name already exists.");
+        alert("A team with that name already exists.");
+        return;
       }
 
       if (!file) {
@@ -205,7 +210,10 @@
     }
 
     function editTeam(id) {
-      if (!requirePasscode()) return alert("Incorrect passcode.");
+      if (!requirePasscode()) {
+        alert("Incorrect passcode.");
+        return;
+      }
 
       const team = teams.find(t => t.id === id);
       if (!team) return;
@@ -214,7 +222,8 @@
       if (!newName) return;
 
       if (teams.some(t => t.name.toLowerCase() === newName.toLowerCase() && t.id !== id)) {
-        return alert("A team with that name already exists.");
+        alert("A team with that name already exists.");
+        return;
       }
 
       team.name = newName;
@@ -227,13 +236,17 @@
           const file = e.target.files[0];
           if (!file) {
             team.avatar = "images/default-avatar.png";
-          } else {
-            const reader = new FileReader();
-            reader.onload = ev => team.avatar = ev.target.result;
-            reader.readAsDataURL(file);
+            localStorage.setItem("teams", JSON.stringify(teams));
+            renderTeams();
+            return;
           }
-          localStorage.setItem("teams", JSON.stringify(teams));
-          renderTeams();
+          const reader = new FileReader();
+          reader.onload = ev => {
+            team.avatar = ev.target.result;
+            localStorage.setItem("teams", JSON.stringify(teams));
+            renderTeams();
+          };
+          reader.readAsDataURL(file);
         };
         input.click();
       } else {
@@ -243,7 +256,10 @@
     }
 
     function deleteTeam(id) {
-      if (!requirePasscode()) return alert("Incorrect passcode.");
+      if (!requirePasscode()) {
+        alert("Incorrect passcode.");
+        return;
+      }
       if (!confirm("Delete this team?")) return;
 
       teams = teams.filter(t => t.id !== id);
@@ -251,9 +267,9 @@
       renderTeams();
     }
 
-    /* ============================
-       TEAM IMPORT / EXPORT
-    ============================ */
+    // ============================
+    // TEAM IMPORT / EXPORT
+    // ============================
     function exportTeams() {
       const data = JSON.stringify(teams, null, 2);
       const blob = new Blob([data], { type: "application/json" });
@@ -269,7 +285,10 @@
 
     function importTeams() {
       const file = document.getElementById("importFile").files[0];
-      if (!file) return alert("Choose a JSON file first.");
+      if (!file) {
+        alert("Choose a JSON file first.");
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = e => {
@@ -288,113 +307,173 @@
       reader.readAsText(file);
     }
 
-    /* ============================
-       ROBUST GROUP FINDER
-    ============================ */
-    function findValidGroup(shuffled, partners, opponents, matches) {
-      const allTeams = shuffled.map(t => t.id);
-
-      // Generate ALL combinations of 4 teams
+    // ============================
+    // HELPER: COMBINATIONS OF 4
+    // ============================
+    function getCombosOf4(ids) {
       const combos = [];
-      for (let i = 0; i < allTeams.length; i++) {
-        for (let j = i + 1; j < allTeams.length; j++) {
-          for (let k = j + 1; k < allTeams.length; k++) {
-            for (let l = k + 1; l < allTeams.length; l++) {
-              combos.push([allTeams[i], allTeams[j], allTeams[k], allTeams[l]]);
+      const n = ids.length;
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          for (let k = j + 1; k < n; k++) {
+            for (let l = k + 1; l < n; l++) {
+              combos.push([ids[i], ids[j], ids[k], ids[l]]);
             }
           }
         }
       }
-
-      // Shuffle combinations
-      for (let i = combos.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [combos[i], combos[j]] = [combos[j], combos[i]];
-      }
-
-      // Try each combination
-      for (const combo of combos) {
-        const [a, b, c, d] = combo;
-
-        // Avoid repeated partners
-        if (partners[a].has(b)) continue;
-        if (partners[c].has(d)) continue;
-
-        // Avoid repeated opponents
-        if (opponents[a].has(c) || opponents[a].has(d)) continue;
-        if (opponents[b].has(c) || opponents[b].has(d)) continue;
-
-        // Avoid back-to-back matches
-        if (matches.length > 0) {
-          const last = matches[matches.length - 1];
-          const lastTeams = new Set([last.red1, last.red2, last.blue1, last.blue2]);
-
-          if (
-            lastTeams.has(a) ||
-            lastTeams.has(b) ||
-            lastTeams.has(c) ||
-            lastTeams.has(d)
-          ) {
-            continue;
-          }
-        }
-
-        return combo; // Valid group found
-      }
-
-      return null; // No valid group found
+      return combos;
     }
 
-    /* ============================
-       FTC-STYLE AUTO SCHEDULER
-    ============================ */
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    // ============================
+    // FTC-STYLE AUTO SCHEDULER
+    // ============================
     function generateSchedule() {
-      if (!requirePasscode()) return alert("Incorrect passcode.");
+      if (!requirePasscode()) {
+        alert("Incorrect passcode.");
+        return;
+      }
 
       const matchesPerTeam = parseInt(document.getElementById("matchesPerTeam").value);
       if (isNaN(matchesPerTeam) || matchesPerTeam < 1) {
-        return alert("Enter a valid number of matches per team.");
+        alert("Enter a valid number of matches per team.");
+        return;
       }
 
       if (teams.length < 4) {
-        return alert("You need at least 4 teams to generate a 2v2 schedule.");
+        alert("You need at least 4 teams to generate a 2v2 schedule.");
+        return;
       }
 
       matches = [];
-      let matchNumber = 1;
 
       const partners = {};
       const opponents = {};
+      const matchCount = {};
 
       teams.forEach(t => {
         partners[t.id] = new Set();
         opponents[t.id] = new Set();
+        matchCount[t.id] = 0;
       });
 
-      const totalMatches = Math.ceil((teams.length * matchesPerTeam) / 4);
+      const MAX_TRIES_PER_MATCH = 200;
+      const allTeamIds = teams.map(t => t.id);
 
-      const shuffled = [...teams];
-
-      function shuffle(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
+      function allTargetsMet() {
+        return allTeamIds.every(id => matchCount[id] >= matchesPerTeam);
       }
 
-      for (let m = 0; m < totalMatches; m++) {
-        shuffle(shuffled);
+      while (!allTargetsMet()) {
+        let chosenGroup = null;
+        let forcedRepeat = false;
 
-        let group = findValidGroup(shuffled, partners, opponents, matches);
-        let surrogate = false;
+        // Try to find a fully valid group
+        let tries = 0;
+        while (tries < MAX_TRIES_PER_MATCH && !chosenGroup) {
+          tries++;
 
-        if (!group) {
-          group = shuffled.slice(0, 4).map(t => t.id);
-          surrogate = true;
+          // Sort teams by fewest matches played, then randomize within same counts
+          const sortedIds = [...allTeamIds].sort((a, b) => matchCount[a] - matchCount[b]);
+          // To add some randomness, shuffle small windows
+          shuffleArray(sortedIds);
+
+          // Limit candidate pool to keep search reasonable
+          const candidateIds = sortedIds; // could slice if needed
+
+          let combos = getCombosOf4(candidateIds);
+          shuffleArray(combos);
+
+          for (const combo of combos) {
+            const [a, b, c, d] = combo;
+
+            // Don't exceed target too much: soft cap at matchesPerTeam+1
+            if (matchCount[a] > matchesPerTeam + 1 ||
+                matchCount[b] > matchesPerTeam + 1 ||
+                matchCount[c] > matchesPerTeam + 1 ||
+                matchCount[d] > matchesPerTeam + 1) {
+              continue;
+            }
+
+            // Avoid repeated partners
+            if (partners[a].has(b)) continue;
+            if (partners[c].has(d)) continue;
+
+            // Avoid repeated opponents
+            if (opponents[a].has(c) || opponents[a].has(d)) continue;
+            if (opponents[b].has(c) || opponents[b].has(d)) continue;
+
+            // Avoid back-to-back matches (minimum 1 match rest)
+            if (matches.length > 0) {
+              const last = matches[matches.length - 1];
+              const lastTeams = new Set([last.red1, last.red2, last.blue1, last.blue2]);
+              if (lastTeams.has(a) || lastTeams.has(b) || lastTeams.has(c) || lastTeams.has(d)) {
+                continue;
+              }
+            }
+
+            chosenGroup = combo;
+            break;
+          }
         }
 
-        const [t1, t2, t3, t4] = group;
+        // If no fully valid group found, allow a forced repeat (with break note)
+        if (!chosenGroup) {
+          forcedRepeat = true;
 
+          let relaxedTries = 0;
+          while (relaxedTries < MAX_TRIES_PER_MATCH && !chosenGroup) {
+            relaxedTries++;
+
+            const sortedIds = [...allTeamIds].sort((a, b) => matchCount[a] - matchCount[b]);
+            shuffleArray(sortedIds);
+            const candidateIds = sortedIds;
+
+            let combos = getCombosOf4(candidateIds);
+            shuffleArray(combos);
+
+            for (const combo of combos) {
+              const [a, b, c, d] = combo;
+
+              // Still avoid back-to-back matches
+              if (matches.length > 0) {
+                const last = matches[matches.length - 1];
+                const lastTeams = new Set([last.red1, last.red2, last.blue1, last.blue2]);
+                if (lastTeams.has(a) || lastTeams.has(b) || lastTeams.has(c) || lastTeams.has(d)) {
+                  continue;
+                }
+              }
+
+              // Soft cap on match counts
+              if (matchCount[a] > matchesPerTeam + 1 ||
+                  matchCount[b] > matchesPerTeam + 1 ||
+                  matchCount[c] > matchesPerTeam + 1 ||
+                  matchCount[d] > matchesPerTeam + 1) {
+                continue;
+              }
+
+              chosenGroup = combo;
+              break;
+            }
+          }
+
+          // If still nothing, break to avoid infinite loop
+          if (!chosenGroup) {
+            console.warn("Scheduler could not find any more valid groups; stopping early.");
+            break;
+          }
+        }
+
+        const [t1, t2, t3, t4] = chosenGroup;
+
+        // Update tracking
         partners[t1].add(t2);
         partners[t2].add(t1);
         partners[t3].add(t4);
@@ -409,23 +488,35 @@
           opponents[b].add(t2);
         });
 
+        matchCount[t1]++;
+        matchCount[t2]++;
+        matchCount[t3]++;
+        matchCount[t4]++;
+
         matches.push({
-          matchNumber: matchNumber++,
+          matchNumber: matches.length + 1,
           red1: t1,
           red2: t2,
           blue1: t3,
           blue2: t4,
-          surrogate
+          surrogate: false,
+          forcedRepeat: forcedRepeat
         });
+
+        // Safety: if we somehow explode in match count, stop
+        if (matches.length > teams.length * matchesPerTeam * 2) {
+          console.warn("Scheduler exceeded expected match count; stopping.");
+          break;
+        }
       }
 
       localStorage.setItem("matches", JSON.stringify(matches));
       renderMatches();
     }
 
-    /* ============================
-       MATCH RENDERING
-    ============================ */
+    // ============================
+    // MATCH RENDERING
+    // ============================
     function renderMatches() {
       const list = document.getElementById("matchList");
       list.innerHTML = "";
@@ -440,10 +531,15 @@
           ? `<span style="color:#EBF368; font-size:0.8rem;">(Surrogate Match)</span>`
           : "";
 
+        const breakTag = match.forcedRepeat
+          ? `<span style="color:#EBF368; font-size:0.8rem;">(5-minute break before this match)</span>`
+          : "";
+
         const div = document.createElement("div");
         div.className = "team-item";
         div.innerHTML = `
-          <strong>Match ${match.matchNumber}</strong> ${surrogateTag}<br>
+          <strong>Match ${match.matchNumber}</strong> 
+          ${surrogateTag} ${breakTag}<br>
           <span style="color:#ff4d4d">${r1} & ${r2}</span> vs 
           <span style="color:#4da6ff">${b1} & ${b2}</span>
           <button onclick="deleteMatch(${match.matchNumber})">Delete</button>
@@ -453,11 +549,14 @@
       });
     }
 
-    /* ============================
-       DELETE MATCH
-    ============================ */
+    // ============================
+    // DELETE MATCH
+    // ============================
     function deleteMatch(num) {
-      if (!requirePasscode()) return alert("Incorrect passcode.");
+      if (!requirePasscode()) {
+        alert("Incorrect passcode.");
+        return;
+      }
 
       matches = matches.filter(m => m.matchNumber !== num);
       matches.forEach((m, i) => m.matchNumber = i + 1);
@@ -466,12 +565,11 @@
       renderMatches();
     }
 
-    /* ============================
-       INITIAL LOAD
-    ============================ */
+    // ============================
+    // INITIAL LOAD
+    // ============================
     renderTeams();
     renderMatches();
-
   </script>
 </body>
 </html>
