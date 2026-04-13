@@ -1,60 +1,129 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Audience Display – Electric Storm Scoring</title>
-    <meta charset="UTF-8">
-    <style>
-      body {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        margin: 0;
-        background: #050816;
-        color: #f5f5f5;
-      }
-      header {
-        background: #0b1020;
-        border-bottom: 2px solid #EBF368;
-        padding: 0.75rem 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .brand {
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        color: #EBF368;
-      }
-      nav a {
-        color: #e5e7eb;
-        text-decoration: none;
-        margin-left: 1rem;
-        font-size: 0.95rem;
-      }
-      nav a:hover {
-        color: #EBF368;
-        text-decoration: underline;
-      }
-      main {
-        padding: 2rem 1.5rem;
-        max-width: 900px;
-        margin: 0 auto;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div class="brand">Electric Storm Scoring</div>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="scorekeeper.html">Scorekeeper</a>
-        <a href="audience.html">Audience Display</a>
-        <a href="rankings.html">Rankings</a>
-        <a href="matches.html">Matches</a>
-      </nav>
-    </header>
+<head>
+  <title>Audience Display – Mini FTC Scoring</title>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #000;
+      color: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
 
-    <main>
-      <h1>Audience Display</h1>
-      <p>This page will hold the match timer and the score display for the audience to view as the match occurs.</p>
-    </main>
-  </body>
+    #timer {
+      font-size: 140px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    #phaseLabel {
+      font-size: 48px;
+      margin-top: -20px;
+      margin-bottom: 20px;
+      color: #ffeb3b;
+    }
+
+    .score-container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 40px;
+    }
+
+    .alliance-box {
+      width: 40%;
+      padding: 30px;
+      border-radius: 20px;
+    }
+
+    .red {
+      background: #D32F2F;
+    }
+
+    .blue {
+      background: #1976D2;
+    }
+
+    .score {
+      font-size: 120px;
+      font-weight: bold;
+    }
+
+    .team-names {
+      font-size: 32px;
+      margin-top: 10px;
+    }
+
+    #matchLabel {
+      font-size: 40px;
+      margin-top: 20px;
+      color: #ccc;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="matchLabel">Match ?</div>
+
+  <div id="timer">3:00</div>
+  <div id="phaseLabel">Waiting…</div>
+
+  <div class="score-container">
+    <div class="alliance-box red">
+      <div class="score" id="redScore">0</div>
+      <div class="team-names" id="redTeams">Red Alliance</div>
+    </div>
+
+    <div class="alliance-box blue">
+      <div class="score" id="blueScore">0</div>
+      <div class="team-names" id="blueTeams">Blue Alliance</div>
+    </div>
+  </div>
+
+<script>
+  function updateDisplay() {
+    const red = localStorage.getItem("scoreRed") || 0;
+    const blue = localStorage.getItem("scoreBlue") || 0;
+    const timeLeft = parseInt(localStorage.getItem("matchTimer") || 180);
+    const phase = localStorage.getItem("currentPeriod") || "waiting";
+    const match = localStorage.getItem("currentMatch") || "?";
+
+    document.getElementById("redScore").textContent = red;
+    document.getElementById("blueScore").textContent = blue;
+
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    document.getElementById("timer").textContent =
+      m + ":" + (s < 10 ? "0" + s : s);
+
+    document.getElementById("matchLabel").textContent = "Match " + match;
+
+    let phaseText = "Waiting…";
+    if (phase === "auto") phaseText = "Autonomous";
+    if (phase === "transition") phaseText = "Transition Period";
+    if (phase === "teleop") phaseText = "Tele-Op";
+    if (phase === "ended") phaseText = "Match Ended";
+
+    document.getElementById("phaseLabel").textContent = phaseText;
+
+    // Load team names if stored
+    const matches = JSON.parse(localStorage.getItem("matches") || "[]");
+    const matchObj = matches.find(m => m.matchNumber == match);
+
+    if (matchObj) {
+      document.getElementById("redTeams").textContent =
+        matchObj.redTeams.join(" & ");
+      document.getElementById("blueTeams").textContent =
+        matchObj.blueTeams.join(" & ");
+    }
+  }
+
+  setInterval(updateDisplay, 200);
+  updateDisplay();
+</script>
+
+</body>
 </html>
