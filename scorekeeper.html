@@ -1,60 +1,317 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Scorekeeper – Electric Storm Scoring</title>
-    <meta charset="UTF-8">
-    <style>
-      body {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        margin: 0;
-        background: #050816;
-        color: #f5f5f5;
-      }
-      header {
-        background: #0b1020;
-        border-bottom: 2px solid #EBF368;
-        padding: 0.75rem 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .brand {
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        color: #EBF368;
-      }
-      nav a {
-        color: #e5e7eb;
-        text-decoration: none;
-        margin-left: 1rem;
-        font-size: 0.95rem;
-      }
-      nav a:hover {
-        color: #EBF368;
-        text-decoration: underline;
-      }
-      main {
-        padding: 2rem 1.5rem;
-        max-width: 900px;
-        margin: 0 auto;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div class="brand">Electric Storm Scoring</div>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="scorekeeper.html">Scorekeeper</a>
-        <a href="audience.html">Audience Display</a>
-        <a href="rankings.html">Rankings</a>
-        <a href="matches.html">Matches</a>
-      </nav>
-    </header>
+<head>
+  <title>Scorekeeper – Mini FTC Scoring</title>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
 
-    <main>
-      <h1>Scorekeeper View</h1>
-      <p>This page will hold all the controls for running a match and entering scores.</p>
-    </main>
-  </body>
+    h1, h2 {
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin: 20px;
+    }
+
+    .big-button {
+      padding: 25px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      border: none;
+      color: white;
+    }
+
+    .red-btn { background: #D32F2F; }
+    .blue-btn { background: #1976D2; }
+    .gray-btn { background: #424242; }
+
+    #timer {
+      font-size: 80px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    #phaseLabel {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    .transition-banner {
+      background: #ffcc00;
+      color: black;
+      padding: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      border-radius: 10px;
+      margin: 20px;
+    }
+
+    .score-display {
+      font-size: 32px;
+      margin: 10px;
+    }
+
+    .match-button {
+      padding: 20px;
+      margin: 10px;
+      font-size: 24px;
+      border-radius: 10px;
+      background: #444;
+      color: white;
+      border: none;
+      cursor: pointer;
+      width: 60%;
+    }
+
+    .alliance-button {
+      padding: 30px;
+      margin: 20px;
+      font-size: 32px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      width: 70%;
+      color: white;
+    }
+
+    .red-alliance { background: #D32F2F; }
+    .blue-alliance { background: #1976D2; }
+  </style>
+</head>
+
+<body>
+
+  <h1>Scorekeeper</h1>
+
+  <!-- SCREEN 1: MATCH SELECTION -->
+  <div id="matchSelectScreen">
+    <h2>Select Match</h2>
+    <div id="matchButtons"></div>
+  </div>
+
+  <!-- SCREEN 2: ALLIANCE SELECTION -->
+  <div id="allianceSelectScreen" class="hidden">
+    <h2>Select Alliance</h2>
+    <button class="alliance-button red-alliance" onclick="chooseAlliance('red')">🔴 Red Alliance</button>
+    <button class="alliance-button blue-alliance" onclick="chooseAlliance('blue')">🔵 Blue Alliance</button>
+  </div>
+
+  <!-- SCREEN 3: SCORING PANEL -->
+  <div id="scoringScreen" class="hidden">
+
+    <div id="timer">3:00</div>
+    <div id="phaseLabel">Waiting to Start</div>
+
+    <div class="score-display">
+      Red Score: <span id="redScore">0</span> |
+      Blue Score: <span id="blueScore">0</span>
+    </div>
+
+    <button class="big-button gray-btn" onclick="startMatch()">▶ Start Match</button>
+    <button class="big-button gray-btn" onclick="stopMatch()">⏸ Stop Match</button>
+    <button class="big-button gray-btn" onclick="resetMatch()">🔄 Reset</button>
+    <button class="big-button gray-btn" onclick="undo()">↩ Undo</button>
+    <button class="big-button gray-btn" onclick="submitFinal()">✔ Submit Final Score</button>
+
+    <h2>Autonomous</h2>
+    <div id="autoButtons" class="button-grid">
+      <button class="big-button red-btn" onclick="score(3)">+3 Push Gem</button>
+      <button class="big-button red-btn" onclick="score(5)">+5 Move Crystal</button>
+      <button class="big-button red-btn" onclick="score(2)">+2 Park in Gem Zone</button>
+    </div>
+
+    <h2>Driver Control</h2>
+    <div id="driverButtons" class="button-grid">
+      <button class="big-button blue-btn" onclick="score(1)">+1 Small Gem</button>
+      <button class="big-button blue-btn" onclick="score(3)">+3 Crystal Gem</button>
+      <button class="big-button blue-btn" onclick="score(5)">+5 Treasure Box</button>
+    </div>
+
+    <h2>Endgame</h2>
+    <div id="endgameButtons" class="button-grid">
+      <button class="big-button blue-btn" onclick="score(10)">+10 Deliver Crystal</button>
+      <button class="big-button blue-btn" onclick="score(5)">+5 Color Orientation</button>
+      <button class="big-button blue-btn" onclick="score(10)">+10 Fill Pedestals</button>
+      <button class="big-button blue-btn" onclick="score(7)">+7 Close Lid</button>
+    </div>
+
+    <div id="transitionBanner" class="transition-banner hidden">
+      Drivers, pick up your controllers!
+    </div>
+
+  </div>
+
+<script>
+  let matches = JSON.parse(localStorage.getItem("matches")) || [];
+  let currentMatch = null;
+  let currentAlliance = null;
+
+  let redScore = 0;
+  let blueScore = 0;
+
+  let timer = null;
+  let timeLeft = 180; // total match time
+  let phase = "waiting";
+
+  let undoStack = [];
+
+  // -------------------------
+  // MATCH SELECTION
+  // -------------------------
+  function loadMatchButtons() {
+    const container = document.getElementById("matchButtons");
+    container.innerHTML = "";
+
+    matches.forEach(m => {
+      const btn = document.createElement("button");
+      btn.className = "match-button";
+      btn.textContent = "Match " + m.matchNumber;
+      btn.onclick = () => chooseMatch(m.matchNumber);
+      container.appendChild(btn);
+    });
+  }
+
+  function chooseMatch(num) {
+    currentMatch = num;
+    localStorage.setItem("currentMatch", num);
+
+    document.getElementById("matchSelectScreen").classList.add("hidden");
+    document.getElementById("allianceSelectScreen").classList.remove("hidden");
+  }
+
+  function chooseAlliance(alliance) {
+    currentAlliance = alliance;
+    localStorage.setItem("currentAlliance", alliance);
+
+    document.getElementById("allianceSelectScreen").classList.add("hidden");
+    document.getElementById("scoringScreen").classList.remove("hidden");
+  }
+
+  // -------------------------
+  // TIMER + PHASE LOGIC
+  // -------------------------
+  function startMatch() {
+    timeLeft = 180;
+    phase = "auto";
+    updatePhaseLabel();
+
+    if (timer) clearInterval(timer);
+    timer = setInterval(tick, 1000);
+  }
+
+  function stopMatch() {
+    if (timer) clearInterval(timer);
+  }
+
+  function resetMatch() {
+    stopMatch();
+    timeLeft = 180;
+    redScore = 0;
+    blueScore = 0;
+    undoStack = [];
+    phase = "waiting";
+    updateDisplay();
+  }
+
+  function tick() {
+    timeLeft--;
+
+    if (timeLeft === 150) {
+      phase = "transition";
+      updatePhaseLabel();
+    }
+
+    if (timeLeft === 142) {
+      phase = "teleop";
+      updatePhaseLabel();
+    }
+
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      phase = "ended";
+      updatePhaseLabel();
+    }
+
+    updateDisplay();
+  }
+
+  function updatePhaseLabel() {
+    const label = document.getElementById("phaseLabel");
+    const banner = document.getElementById("transitionBanner");
+
+    banner.classList.add("hidden");
+
+    if (phase === "auto") label.textContent = "Autonomous";
+    if (phase === "transition") {
+      label.textContent = "Transition Period";
+      banner.classList.remove("hidden");
+    }
+    if (phase === "teleop") label.textContent = "Tele-Op";
+    if (phase === "ended") label.textContent = "Match Ended";
+    if (phase === "waiting") label.textContent = "Waiting to Start";
+  }
+
+  // -------------------------
+  // SCORING
+  // -------------------------
+  function score(points) {
+    undoStack.push({ red: redScore, blue: blueScore });
+
+    if (currentAlliance === "red") redScore += points;
+    else blueScore += points;
+
+    updateDisplay();
+  }
+
+  function undo() {
+    if (undoStack.length === 0) return;
+    const prev = undoStack.pop();
+    redScore = prev.red;
+    blueScore = prev.blue;
+    updateDisplay();
+  }
+
+  function submitFinal() {
+    alert("Final score submitted!");
+  }
+
+  // -------------------------
+  // DISPLAY + SYNC
+  // -------------------------
+  function updateDisplay() {
+    document.getElementById("redScore").textContent = redScore;
+    document.getElementById("blueScore").textContent = blueScore;
+
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    document.getElementById("timer").textContent =
+      m + ":" + (s < 10 ? "0" + s : s);
+
+    localStorage.setItem("scoreRed", redScore);
+    localStorage.setItem("scoreBlue", blueScore);
+    localStorage.setItem("matchTimer", timeLeft);
+    localStorage.setItem("currentPeriod", phase);
+  }
+
+  loadMatchButtons();
+</script>
+
+</body>
 </html>
