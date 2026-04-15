@@ -6,11 +6,45 @@
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: #111;
+      background: #0a0a0a;
       color: white;
       margin: 0;
       padding: 0;
       text-align: center;
+    }
+
+    /* ELECTRIC STORM NAV BAR */
+    nav {
+      background: #000;
+      padding: 15px 0;
+      border-bottom: 4px solid #EBF368;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    nav a {
+      color: #EBF368;
+      text-decoration: none;
+      position: relative;
+      padding: 5px 10px;
+      transition: 0.2s;
+    }
+
+    nav a:hover {
+      color: black;
+      background: #EBF368;
+      border-radius: 6px;
+      box-shadow: 0 0 12px #EBF368;
+    }
+
+    nav a:hover::after {
+      content: "⚡";
+      position: absolute;
+      right: -18px;
+      top: 0;
     }
 
     h1, h2 {
@@ -42,25 +76,11 @@
     .blue-btn { background: #1976D2; }
     .gray-btn { background: #424242; }
 
-    #timer {
-      font-size: 80px;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-
     #phaseLabel {
       font-size: 32px;
       margin-bottom: 20px;
-    }
-
-    .transition-banner {
-      background: #ffcc00;
-      color: black;
-      padding: 20px;
-      font-size: 28px;
-      font-weight: bold;
-      border-radius: 10px;
-      margin: 20px;
+      color: #EBF368;
+      text-shadow: 0 0 10px #EBF368;
     }
 
     .score-display {
@@ -98,6 +118,15 @@
 
 <body>
 
+  <!-- NAV BAR -->
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="scorekeeper.html">Scorekeeper</a>
+    <a href="audience.html">Audience</a>
+    <a href="matches.html">Matches</a>
+    <a href="rankings.html">Rankings</a>
+  </nav>
+
   <h1>Scorekeeper</h1>
 
   <!-- SCREEN 1: MATCH SELECTION -->
@@ -116,16 +145,13 @@
   <!-- SCREEN 3: SCORING PANEL -->
   <div id="scoringScreen" class="hidden">
 
-    <div id="timer">3:00</div>
-    <div id="phaseLabel">Waiting to Start</div>
+    <div id="phaseLabel">Waiting for Match</div>
 
     <div class="score-display">
       Red Score: <span id="redScore">0</span> |
       Blue Score: <span id="blueScore">0</span>
     </div>
 
-    <button class="big-button gray-btn" onclick="startMatch()">▶ Start Match</button>
-    <button class="big-button gray-btn" onclick="stopMatch()">⏸ Stop Match</button>
     <button class="big-button gray-btn" onclick="resetMatch()">🔄 Reset</button>
     <button class="big-button gray-btn" onclick="undo()">↩ Undo</button>
     <button class="big-button gray-btn" onclick="submitFinal()">✔ Submit Final Score</button>
@@ -133,27 +159,40 @@
     <h2>Autonomous</h2>
     <div id="autoButtons" class="button-grid">
       <button class="big-button red-btn" onclick="score(3)">+3 Push Gem</button>
+      <button class="big-button red-btn" onclick="score(-3)">-3 Push Gem</button>
+
       <button class="big-button red-btn" onclick="score(5)">+5 Move Crystal</button>
+      <button class="big-button red-btn" onclick="score(-5)">-5 Move Crystal</button>
+
       <button class="big-button red-btn" onclick="score(2)">+2 Park in Gem Zone</button>
+      <button class="big-button red-btn" onclick="score(-2)">-2 Park in Gem Zone</button>
     </div>
 
     <h2>Driver Control</h2>
     <div id="driverButtons" class="button-grid">
       <button class="big-button blue-btn" onclick="score(1)">+1 Small Gem</button>
+      <button class="big-button blue-btn" onclick="score(-1)">-1 Small Gem</button>
+
       <button class="big-button blue-btn" onclick="score(3)">+3 Crystal Gem</button>
+      <button class="big-button blue-btn" onclick="score(-3)">-3 Crystal Gem</button>
+
       <button class="big-button blue-btn" onclick="score(5)">+5 Treasure Box</button>
+      <button class="big-button blue-btn" onclick="score(-5)">-5 Treasure Box</button>
     </div>
 
     <h2>Endgame</h2>
     <div id="endgameButtons" class="button-grid">
       <button class="big-button blue-btn" onclick="score(10)">+10 Deliver Crystal</button>
-      <button class="big-button blue-btn" onclick="score(5)">+5 Color Orientation</button>
-      <button class="big-button blue-btn" onclick="score(10)">+10 Fill Pedestals</button>
-      <button class="big-button blue-btn" onclick="score(7)">+7 Close Lid</button>
-    </div>
+      <button class="big-button blue-btn" onclick="score(-10)">-10 Deliver Crystal</button>
 
-    <div id="transitionBanner" class="transition-banner hidden">
-      Drivers, pick up your controllers!
+      <button class="big-button blue-btn" onclick="score(5)">+5 Color Orientation</button>
+      <button class="big-button blue-btn" onclick="score(-5)">-5 Color Orientation</button>
+
+      <button class="big-button blue-btn" onclick="score(10)">+10 Fill Pedestals</button>
+      <button class="big-button blue-btn" onclick="score(-10)">-10 Fill Pedestals</button>
+
+      <button class="big-button blue-btn" onclick="score(7)">+7 Close Lid</button>
+      <button class="big-button blue-btn" onclick="score(-7)">-7 Close Lid</button>
     </div>
 
   </div>
@@ -165,10 +204,6 @@
 
   let redScore = 0;
   let blueScore = 0;
-
-  let timer = null;
-  let timeLeft = 180; // total match time
-  let phase = "waiting";
 
   let undoStack = [];
 
@@ -205,70 +240,6 @@
   }
 
   // -------------------------
-  // TIMER + PHASE LOGIC
-  // -------------------------
-  function startMatch() {
-    timeLeft = 180;
-    phase = "auto";
-    updatePhaseLabel();
-
-    if (timer) clearInterval(timer);
-    timer = setInterval(tick, 1000);
-  }
-
-  function stopMatch() {
-    if (timer) clearInterval(timer);
-  }
-
-  function resetMatch() {
-    stopMatch();
-    timeLeft = 180;
-    redScore = 0;
-    blueScore = 0;
-    undoStack = [];
-    phase = "waiting";
-    updateDisplay();
-  }
-
-  function tick() {
-    timeLeft--;
-
-    if (timeLeft === 150) {
-      phase = "transition";
-      updatePhaseLabel();
-    }
-
-    if (timeLeft === 142) {
-      phase = "teleop";
-      updatePhaseLabel();
-    }
-
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      phase = "ended";
-      updatePhaseLabel();
-    }
-
-    updateDisplay();
-  }
-
-  function updatePhaseLabel() {
-    const label = document.getElementById("phaseLabel");
-    const banner = document.getElementById("transitionBanner");
-
-    banner.classList.add("hidden");
-
-    if (phase === "auto") label.textContent = "Autonomous";
-    if (phase === "transition") {
-      label.textContent = "Transition Period";
-      banner.classList.remove("hidden");
-    }
-    if (phase === "teleop") label.textContent = "Tele-Op";
-    if (phase === "ended") label.textContent = "Match Ended";
-    if (phase === "waiting") label.textContent = "Waiting to Start";
-  }
-
-  // -------------------------
   // SCORING
   // -------------------------
   function score(points) {
@@ -299,16 +270,41 @@
     document.getElementById("redScore").textContent = redScore;
     document.getElementById("blueScore").textContent = blueScore;
 
-    const m = Math.floor(timeLeft / 60);
-    const s = timeLeft % 60;
-    document.getElementById("timer").textContent =
-      m + ":" + (s < 10 ? "0" + s : s);
-
     localStorage.setItem("scoreRed", redScore);
     localStorage.setItem("scoreBlue", blueScore);
-    localStorage.setItem("matchTimer", timeLeft);
-    localStorage.setItem("currentPeriod", phase);
   }
+
+  // -------------------------
+  // PHASE LISTENER (from audience display)
+  // -------------------------
+  setInterval(() => {
+    const phase = localStorage.getItem("currentPeriod") || "waiting";
+    document.getElementById("phaseLabel").textContent =
+      phase === "auto" ? "Autonomous" :
+      phase === "transition" ? "Transition Period" :
+      phase === "teleop" ? "Tele-Op" :
+      phase === "ended" ? "Match Ended" :
+      "Waiting for Match";
+
+    // Enable/disable scoring buttons
+    document.getElementById("autoButtons").style.opacity =
+      phase === "auto" ? 1 : 0.3;
+    document.getElementById("driverButtons").style.opacity =
+      phase === "teleop" ? 1 : 0.3;
+    document.getElementById("endgameButtons").style.opacity =
+      phase === "teleop" ? 1 : 0.3;
+
+    const disableAuto = phase !== "auto";
+    const disableTele = phase !== "teleop";
+
+    document.querySelectorAll("#autoButtons button").forEach(b => b.disabled = disableAuto);
+    document.querySelectorAll("#driverButtons button").forEach(b => b.disabled = disableTele);
+    document.querySelectorAll("#endgameButtons button").forEach(b => b.disabled = disableTele);
+
+    if (phase === "ended") {
+      document.querySelectorAll("button").forEach(b => b.disabled = false);
+    }
+  }, 200);
 
   loadMatchButtons();
 </script>
