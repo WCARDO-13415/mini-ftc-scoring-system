@@ -13,29 +13,72 @@
       text-align: center;
     }
 
-    #timer {
-      font-size: 140px;
+    /* ELECTRIC STORM NAV BAR */
+    nav {
+      background: #000;
+      padding: 15px 0;
+      border-bottom: 4px solid #EBF368;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      font-size: 22px;
       font-weight: bold;
+    }
+
+    nav a {
+      color: #EBF368;
+      text-decoration: none;
+      position: relative;
+      padding: 5px 10px;
+      transition: 0.2s;
+    }
+
+    nav a:hover {
+      color: black;
+      background: #EBF368;
+      border-radius: 6px;
+      box-shadow: 0 0 12px #EBF368;
+    }
+
+    nav a:hover::after {
+      content: "⚡";
+      position: absolute;
+      right: -18px;
+      top: 0;
+    }
+
+    #matchLabel {
+      font-size: 40px;
       margin-top: 20px;
+      color: #ccc;
+    }
+
+    #timer {
+      font-size: 160px;
+      font-weight: bold;
+      margin-top: 10px;
     }
 
     #phaseLabel {
       font-size: 48px;
       margin-top: -20px;
       margin-bottom: 20px;
-      color: #ffeb3b;
+      color: #EBF368;
+      text-shadow: 0 0 12px #EBF368;
     }
 
     .score-container {
       display: flex;
       justify-content: space-around;
       margin-top: 40px;
+      padding: 0 40px;
     }
 
     .alliance-box {
       width: 40%;
       padding: 30px;
       border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
     }
 
     .red {
@@ -56,15 +99,40 @@
       margin-top: 10px;
     }
 
-    #matchLabel {
-      font-size: 40px;
-      margin-top: 20px;
-      color: #ccc;
+    .sub-label {
+      font-size: 20px;
+      opacity: 0.8;
+      margin-bottom: 5px;
+    }
+
+    .controls {
+      margin-top: 30px;
+    }
+
+    .control-button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #EBF368;
+      color: black;
+      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
+
+  <!-- NAV BAR -->
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="scorekeeper.html">Scorekeeper</a>
+    <a href="audience.html">Audience</a>
+    <a href="matches.html">Matches</a>
+    <a href="rankings.html">Rankings</a>
+  </nav>
 
   <div id="matchLabel">Match ?</div>
 
@@ -73,55 +141,139 @@
 
   <div class="score-container">
     <div class="alliance-box red">
+      <div class="sub-label">Red Alliance</div>
       <div class="score" id="redScore">0</div>
-      <div class="team-names" id="redTeams">Red Alliance</div>
+      <div class="team-names" id="redTeams">Red Teams</div>
     </div>
 
     <div class="alliance-box blue">
+      <div class="sub-label">Blue Alliance</div>
       <div class="score" id="blueScore">0</div>
-      <div class="team-names" id="blueTeams">Blue Alliance</div>
+      <div class="team-names" id="blueTeams">Blue Teams</div>
     </div>
   </div>
 
+  <div class="controls">
+    <button class="control-button" onclick="startMatch()">▶ Start Match</button>
+    <button class="control-button" onclick="stopMatch()">⏸ Pause</button>
+    <button class="control-button" onclick="resetMatch()">🔄 Reset</button>
+  </div>
+
 <script>
+  // Full match = 30s auto + 8s transition + 120s teleop = 158s
+  const AUTO_DURATION = 30;
+  const TRANSITION_DURATION = 8;
+  const TELEOP_DURATION = 120;
+  const TOTAL_TIME = AUTO_DURATION + TRANSITION_DURATION + TELEOP_DURATION;
+
+  let timeLeft = TOTAL_TIME;
+  let timer = null;
+  let phase = "waiting";
+
+  function startMatch() {
+    if (timer) clearInterval(timer);
+    if (phase === "waiting" || phase === "ended") {
+      timeLeft = TOTAL_TIME;
+    }
+    timer = setInterval(tick, 1000);
+    updatePhaseFromTime();
+    syncState();
+  }
+
+  function stopMatch() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    syncState();
+  }
+
+  function resetMatch() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    timeLeft = TOTAL_TIME;
+    phase = "waiting";
+    updateDisplay();
+    syncState();
+  }
+
+  function tick() {
+    timeLeft--;
+
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      if (timer) clearInterval(timer);
+      timer = null;
+      phase = "ended";
+    } else {
+      updatePhaseFromTime();
+    }
+
+    updateDisplay();
+    syncState();
+  }
+
+  function updatePhaseFromTime() {
+    const elapsed = TOTAL_TIME - timeLeft;
+
+    if (elapsed < AUTO_DURATION) {
+      phase = "auto";
+    } else if (elapsed < AUTO_DURATION + TRANSITION_DURATION) {
+      phase = "transition";
+    } else if (elapsed < TOTAL_TIME) {
+      phase = "teleop";
+    } else {
+      phase = "ended";
+    }
+  }
+
   function updateDisplay() {
-    const red = localStorage.getItem("scoreRed") || 0;
-    const blue = localStorage.getItem("scoreBlue") || 0;
-    const timeLeft = parseInt(localStorage.getItem("matchTimer") || 180);
-    const phase = localStorage.getItem("currentPeriod") || "waiting";
-    const match = localStorage.getItem("currentMatch") || "?";
-
-    document.getElementById("redScore").textContent = red;
-    document.getElementById("blueScore").textContent = blue;
-
+    // Timer
     const m = Math.floor(timeLeft / 60);
     const s = timeLeft % 60;
     document.getElementById("timer").textContent =
       m + ":" + (s < 10 ? "0" + s : s);
 
-    document.getElementById("matchLabel").textContent = "Match " + match;
-
+    // Phase label
     let phaseText = "Waiting…";
     if (phase === "auto") phaseText = "Autonomous";
     if (phase === "transition") phaseText = "Transition Period";
     if (phase === "teleop") phaseText = "Tele-Op";
     if (phase === "ended") phaseText = "Match Ended";
-
     document.getElementById("phaseLabel").textContent = phaseText;
 
-    // Load team names if stored
+    // Scores from localStorage
+    const red = parseInt(localStorage.getItem("scoreRed") || "0", 10);
+    const blue = parseInt(localStorage.getItem("scoreBlue") || "0", 10);
+    document.getElementById("redScore").textContent = red;
+    document.getElementById("blueScore").textContent = blue;
+
+    // Match label
+    const match = localStorage.getItem("currentMatch") || "?";
+    document.getElementById("matchLabel").textContent = "Match " + match;
+
+    // Team names from matches[]
     const matches = JSON.parse(localStorage.getItem("matches") || "[]");
     const matchObj = matches.find(m => m.matchNumber == match);
 
     if (matchObj) {
       document.getElementById("redTeams").textContent =
-        matchObj.redTeams.join(" & ");
+        (matchObj.redTeams || []).join(" & ") || "Red Teams";
       document.getElementById("blueTeams").textContent =
-        matchObj.blueTeams.join(" & ");
+        (matchObj.blueTeams || []).join(" & ") || "Blue Teams";
+    } else {
+      document.getElementById("redTeams").textContent = "Red Teams";
+      document.getElementById("blueTeams").textContent = "Blue Teams";
     }
   }
 
+  function syncState() {
+    localStorage.setItem("matchTimer", timeLeft);
+    localStorage.setItem("currentPeriod", phase);
+  }
+
+  // Keep pulling scores + match info from localStorage
   setInterval(updateDisplay, 200);
+
+  // Initialize
   updateDisplay();
 </script>
 
