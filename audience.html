@@ -81,13 +81,8 @@
       box-shadow: 0 0 20px rgba(0,0,0,0.6);
     }
 
-    .red {
-      background: #D32F2F;
-    }
-
-    .blue {
-      background: #1976D2;
-    }
+    .red { background: #D32F2F; }
+    .blue { background: #1976D2; }
 
     .score {
       font-size: 120px;
@@ -105,20 +100,18 @@
       margin-bottom: 5px;
     }
 
-    .controls {
-      margin-top: 30px;
+    /* GEM + TREASURE UI */
+    #gemPanel {
+      margin-top: 50px;
+      font-size: 32px;
+      color: #EBF368;
     }
 
-    .control-button {
-      padding: 15px 30px;
-      margin: 10px;
-      font-size: 20px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      background: #EBF368;
-      color: black;
-      font-weight: bold;
+    #treasureBoxDisplay {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
     }
   </style>
 </head>
@@ -153,31 +146,58 @@
     </div>
   </div>
 
-  <div class="controls">
-    <button class="control-button" onclick="startMatch()">▶ Start Match</button>
-    <button class="control-button" onclick="stopMatch()">⏸ Pause</button>
-    <button class="control-button" onclick="resetMatch()">🔄 Reset</button>
+  <!-- GEM COUNTS -->
+  <div id="gemPanel">
+    <div>Small Gems: <span id="smallGemCount">0</span></div>
+    <div>Crystal Gems: <span id="crystalGemCount">0</span></div>
+    <div>Push Gems: <span id="pushGemCount">0</span></div>
+    <div>Move Crystals: <span id="moveCrystalCount">0</span></div>
+    <div>Park in Gem Zone: <span id="parkGemZoneCount">0</span></div>
+    <div>Deliver Crystals: <span id="deliverCrystalCount">0</span></div>
+    <div>Color Orientation: <span id="colorOrientationCount">0</span></div>
+    <div>Fill Pedestals: <span id="fillPedestalsCount">0</span></div>
+    <div>Close Lid: <span id="closeLidCount">0</span></div>
+  </div>
+
+  <!-- TREASURE BOX ICONS -->
+  <div id="treasureBoxDisplay">
+    <svg id="chest1" width="120" height="120" viewBox="0 0 100 100"></svg>
+    <svg id="chest2" width="120" height="120" viewBox="0 0 100 100"></svg>
   </div>
 
 <script>
-  // Full match = 30s auto + 8s transition + 120s teleop = 158s
-  const AUTO_DURATION = 30;
-  const TRANSITION_DURATION = 8;
-  const TELEOP_DURATION = 120;
-  const TOTAL_TIME = AUTO_DURATION + TRANSITION_DURATION + TELEOP_DURATION;
+  /* DRAW TREASURE CHESTS */
+  function drawChest(svgElement, filled) {
+    svgElement.innerHTML = filled
+      ? `
+        <rect x="10" y="30" width="80" height="50" fill="#EBF368" stroke="#000" stroke-width="4"/>
+        <rect x="10" y="20" width="80" height="20" fill="#C9C04A" stroke="#000" stroke-width="4"/>
+        <circle cx="50" cy="55" r="6" fill="#000"/>
+      `
+      : `
+        <rect x="10" y="30" width="80" height="50" fill="none" stroke="#EBF368" stroke-width="4"/>
+        <rect x="10" y="20" width="80" height="20" fill="none" stroke="#EBF368" stroke-width="4"/>
+        <circle cx="50" cy="55" r="6" fill="none" stroke="#EBF368" stroke-width="4"/>
+      `;
+  }
 
-  let timeLeft = TOTAL_TIME;
-  let timer = null;
+  /* TIMER PHASES */
+  const AUTO_TIME = 30;
+  const TRANSITION_TIME = 8;
+  const TELEOP_TIME = 120;
+  const ENDGAME_START = 30;
+
   let phase = "waiting";
+  let timeLeft = AUTO_TIME;
+  let timer = null;
 
   function startMatch() {
     if (timer) clearInterval(timer);
-    if (phase === "waiting" || phase === "ended") {
-      timeLeft = TOTAL_TIME;
-    }
+    phase = "auto";
+    timeLeft = AUTO_TIME;
     timer = setInterval(tick, 1000);
-    updatePhaseFromTime();
     syncState();
+    updateDisplay();
   }
 
   function stopMatch() {
@@ -189,8 +209,8 @@
   function resetMatch() {
     if (timer) clearInterval(timer);
     timer = null;
-    timeLeft = TOTAL_TIME;
     phase = "waiting";
+    timeLeft = AUTO_TIME;
     updateDisplay();
     syncState();
   }
@@ -198,31 +218,26 @@
   function tick() {
     timeLeft--;
 
-    if (timeLeft <= 0) {
-      timeLeft = 0;
-      if (timer) clearInterval(timer);
-      timer = null;
+    if (phase === "auto" && timeLeft <= 0) {
+      phase = "transition";
+      timeLeft = TRANSITION_TIME;
+    }
+    else if (phase === "transition" && timeLeft <= 0) {
+      phase = "teleop";
+      timeLeft = TELEOP_TIME;
+    }
+    else if (phase === "teleop" && timeLeft === ENDGAME_START) {
+      phase = "endgame";
+    }
+    else if ((phase === "teleop" || phase === "endgame") && timeLeft <= 0) {
       phase = "ended";
-    } else {
-      updatePhaseFromTime();
+      timeLeft = 0;
+      clearInterval(timer);
+      timer = null;
     }
 
     updateDisplay();
     syncState();
-  }
-
-  function updatePhaseFromTime() {
-    const elapsed = TOTAL_TIME - timeLeft;
-
-    if (elapsed < AUTO_DURATION) {
-      phase = "auto";
-    } else if (elapsed < AUTO_DURATION + TRANSITION_DURATION) {
-      phase = "transition";
-    } else if (elapsed < TOTAL_TIME) {
-      phase = "teleop";
-    } else {
-      phase = "ended";
-    }
   }
 
   function updateDisplay() {
@@ -233,24 +248,25 @@
       m + ":" + (s < 10 ? "0" + s : s);
 
     // Phase label
-    let phaseText = "Waiting…";
-    if (phase === "auto") phaseText = "Autonomous";
-    if (phase === "transition") phaseText = "Transition Period";
-    if (phase === "teleop") phaseText = "Tele-Op";
-    if (phase === "ended") phaseText = "Match Ended";
-    document.getElementById("phaseLabel").textContent = phaseText;
+    let label = "Waiting…";
+    if (phase === "auto") label = "Autonomous";
+    if (phase === "transition") label = "Transition Period";
+    if (phase === "teleop") label = "Tele-Op";
+    if (phase === "endgame") label = "Endgame";
+    if (phase === "ended") label = "Match Ended";
+    document.getElementById("phaseLabel").textContent = label;
 
-    // Scores from localStorage
-    const red = parseInt(localStorage.getItem("scoreRed") || "0", 10);
-    const blue = parseInt(localStorage.getItem("scoreBlue") || "0", 10);
-    document.getElementById("redScore").textContent = red;
-    document.getElementById("blueScore").textContent = blue;
+    // Scores
+    document.getElementById("redScore").textContent =
+      localStorage.getItem("scoreRed") || 0;
+    document.getElementById("blueScore").textContent =
+      localStorage.getItem("scoreBlue") || 0;
 
     // Match label
     const match = localStorage.getItem("currentMatch") || "?";
     document.getElementById("matchLabel").textContent = "Match " + match;
 
-    // Team names from matches[]
+    // Team names
     const matches = JSON.parse(localStorage.getItem("matches") || "[]");
     const matchObj = matches.find(m => m.matchNumber == match);
 
@@ -259,21 +275,33 @@
         (matchObj.redTeams || []).join(" & ") || "Red Teams";
       document.getElementById("blueTeams").textContent =
         (matchObj.blueTeams || []).join(" & ") || "Blue Teams";
-    } else {
-      document.getElementById("redTeams").textContent = "Red Teams";
-      document.getElementById("blueTeams").textContent = "Blue Teams";
     }
+
+    // GEM COUNTS
+    const gemIds = [
+      "smallGem", "crystalGem", "pushGem", "moveCrystal",
+      "parkGemZone", "deliverCrystal", "colorOrientation",
+      "fillPedestals", "closeLid"
+    ];
+
+    gemIds.forEach(id => {
+      document.getElementById(id + "Count").textContent =
+        localStorage.getItem(id + "Count") || 0;
+    });
+
+    // TREASURE BOXES
+    const treasureCount = parseInt(localStorage.getItem("treasureBoxCount") || "0", 10);
+    drawChest(document.getElementById("chest1"), treasureCount >= 1);
+    drawChest(document.getElementById("chest2"), treasureCount >= 2);
   }
 
   function syncState() {
-    localStorage.setItem("matchTimer", timeLeft);
     localStorage.setItem("currentPeriod", phase);
+    localStorage.setItem("matchTimer", timeLeft);
   }
 
-  // Keep pulling scores + match info from localStorage
+  // Update display continuously
   setInterval(updateDisplay, 200);
-
-  // Initialize
   updateDisplay();
 </script>
 
