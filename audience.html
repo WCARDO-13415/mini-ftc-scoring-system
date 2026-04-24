@@ -13,7 +13,7 @@
       text-align: center;
     }
 
-    /* ELECTRIC STORM NAV BAR */
+    /* NAV BAR */
     nav {
       background: #000;
       padding: 15px 0;
@@ -48,71 +48,130 @@
     }
 
     #matchLabel {
-      font-size: 40px;
-      margin-top: 20px;
+      font-size: 32px;
+      margin-top: 10px;
       color: #ccc;
     }
 
     #timer {
-      font-size: 160px;
+      font-size: 140px;
       font-weight: bold;
-      margin-top: 10px;
+      margin-top: 5px;
     }
 
     #phaseLabel {
-      font-size: 48px;
-      margin-top: -20px;
-      margin-bottom: 20px;
+      font-size: 40px;
+      margin-top: -10px;
+      margin-bottom: 10px;
       color: #EBF368;
       text-shadow: 0 0 12px #EBF368;
     }
 
-    .score-container {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 40px;
-      padding: 0 40px;
+    .controls {
+      margin-top: 10px;
+      margin-bottom: 20px;
     }
 
-    .alliance-box {
-      width: 40%;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.6);
-    }
-
-    .red { background: #D32F2F; }
-    .blue { background: #1976D2; }
-
-    .score {
-      font-size: 120px;
+    .controls button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
       font-weight: bold;
     }
 
-    .team-names {
-      font-size: 32px;
-      margin-top: 10px;
+    .start-btn { background: #4CAF50; color: white; }
+    .stop-btn  { background: #F44336; color: white; }
+    .reset-btn { background: #555; color: white; }
+
+    .alliances {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      margin: 20px 40px 40px;
+      gap: 40px;
     }
 
-    .sub-label {
-      font-size: 20px;
-      opacity: 0.8;
+    .alliance-panel {
+      flex: 1;
+      max-width: 600px;
+      background: #111;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    }
+
+    .alliance-header {
+      font-size: 28px;
       margin-bottom: 5px;
     }
 
-    /* GEM + TREASURE UI */
-    #gemPanel {
-      margin-top: 50px;
-      font-size: 32px;
-      color: #EBF368;
+    .alliance-teams {
+      font-size: 22px;
+      margin-bottom: 10px;
+      color: #ccc;
     }
 
-    #treasureBoxDisplay {
-      margin-top: 20px;
+    .alliance-score {
+      font-size: 80px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .row {
+      margin-top: 10px;
+    }
+
+    .row.gems {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-top: 15px;
+    }
+
+    .gem-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 28px;
+    }
+
+    .gem-svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    .row.pedestals {
       display: flex;
       justify-content: center;
-      gap: 40px;
+      gap: 20px;
+      margin-top: 20px;
     }
+
+    .pedestal-svg {
+      width: 50px;
+      height: 60px;
+    }
+
+    .row.chests {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .chest-svg {
+      width: 70px;
+      height: 70px;
+    }
+
+    .red-theme .alliance-header { color: #FFCDD2; }
+    .blue-theme .alliance-header { color: #BBDEFB; }
+
+    .red-theme .alliance-score { color: #FF5252; }
+    .blue-theme .alliance-score { color: #64B5F6; }
   </style>
 </head>
 
@@ -128,70 +187,191 @@
   </nav>
 
   <div id="matchLabel">Match ?</div>
-
   <div id="timer">3:00</div>
   <div id="phaseLabel">Waiting…</div>
 
-  <div class="score-container">
-    <div class="alliance-box red">
-      <div class="sub-label">Red Alliance</div>
-      <div class="score" id="redScore">0</div>
-      <div class="team-names" id="redTeams">Red Teams</div>
-    </div>
-
-    <div class="alliance-box blue">
-      <div class="sub-label">Blue Alliance</div>
-      <div class="score" id="blueScore">0</div>
-      <div class="team-names" id="blueTeams">Blue Teams</div>
-    </div>
+  <div class="controls">
+    <button class="start-btn" onclick="startMatch()">Start Match</button>
+    <button class="stop-btn" onclick="stopMatch()">Stop Match</button>
+    <button class="reset-btn" onclick="resetMatch()">Reset Match</button>
   </div>
 
-  <!-- GEM COUNTS -->
-  <div id="gemPanel">
-    <div>Small Gems: <span id="smallGemCount">0</span></div>
-    <div>Crystal Gems: <span id="crystalGemCount">0</span></div>
-    <div>Push Gems: <span id="pushGemCount">0</span></div>
-    <div>Move Crystals: <span id="moveCrystalCount">0</span></div>
-    <div>Park in Gem Zone: <span id="parkGemZoneCount">0</span></div>
-    <div>Deliver Crystals: <span id="deliverCrystalCount">0</span></div>
-    <div>Color Orientation: <span id="colorOrientationCount">0</span></div>
-    <div>Fill Pedestals: <span id="fillPedestalsCount">0</span></div>
-    <div>Close Lid: <span id="closeLidCount">0</span></div>
-  </div>
+  <div class="alliances">
+    <!-- RED ALLIANCE -->
+    <div class="alliance-panel red-theme">
+      <div class="alliance-header">Red Alliance</div>
+      <div class="alliance-teams" id="redTeams">Red Teams</div>
+      <div class="alliance-score" id="redScore">0</div>
 
-  <!-- TREASURE BOX ICONS -->
-  <div id="treasureBoxDisplay">
-    <svg id="chest1" width="120" height="120" viewBox="0 0 100 100"></svg>
-    <svg id="chest2" width="120" height="120" viewBox="0 0 100 100"></svg>
+      <!-- Row 1: Gems -->
+      <div class="row gems">
+        <div class="gem-block">
+          <svg class="gem-svg" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="30" fill="#FFEB3B" />
+          </svg>
+          <span id="redSmallGemCount">0</span>
+        </div>
+        <div class="gem-block">
+          <svg class="gem-svg" viewBox="0 0 100 100">
+            <polygon points="50,10 90,50 50,90 10,50" fill="#FFC107" />
+          </svg>
+          <span id="redCrystalGemCount">0</span>
+        </div>
+      </div>
+
+      <!-- Row 2: Pedestals -->
+      <div class="row pedestals">
+        <svg class="pedestal-svg" id="redPedestal1" viewBox="0 0 100 120"></svg>
+        <svg class="pedestal-svg" id="redPedestal2" viewBox="0 0 100 120"></svg>
+        <svg class="pedestal-svg" id="redPedestal3" viewBox="0 0 100 120"></svg>
+      </div>
+
+      <!-- Row 3: Chests -->
+      <div class="row chests">
+        <svg class="chest-svg" id="redChest1" viewBox="0 0 100 100"></svg>
+        <svg class="chest-svg" id="redChest2" viewBox="0 0 100 100"></svg>
+      </div>
+    </div>
+
+    <!-- BLUE ALLIANCE -->
+    <div class="alliance-panel blue-theme">
+      <div class="alliance-header">Blue Alliance</div>
+      <div class="alliance-teams" id="blueTeams">Blue Teams</div>
+      <div class="alliance-score" id="blueScore">0</div>
+
+      <!-- Row 1: Gems -->
+      <div class="row gems">
+        <div class="gem-block">
+          <svg class="gem-svg" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="30" fill="#BBDEFB" />
+          </svg>
+          <span id="blueSmallGemCount">0</span>
+        </div>
+        <div class="gem-block">
+          <svg class="gem-svg" viewBox="0 0 100 100">
+            <polygon points="50,10 90,50 50,90 10,50" fill="#64B5F6" />
+          </svg>
+          <span id="blueCrystalGemCount">0</span>
+        </div>
+      </div>
+
+      <!-- Row 2: Pedestals -->
+      <div class="row pedestals">
+        <svg class="pedestal-svg" id="bluePedestal1" viewBox="0 0 100 120"></svg>
+        <svg class="pedestal-svg" id="bluePedestal2" viewBox="0 0 100 120"></svg>
+        <svg class="pedestal-svg" id="bluePedestal3" viewBox="0 0 100 120"></svg>
+      </div>
+
+      <!-- Row 3: Chests -->
+      <div class="row chests">
+        <svg class="chest-svg" id="blueChest1" viewBox="0 0 100 100"></svg>
+        <svg class="chest-svg" id="blueChest2" viewBox="0 0 100 100"></svg>
+      </div>
+    </div>
   </div>
 
 <script>
-  /* DRAW TREASURE CHESTS */
-  function drawChest(svgElement, filled) {
-    svgElement.innerHTML = filled
-      ? `
-        <rect x="10" y="30" width="80" height="50" fill="#EBF368" stroke="#000" stroke-width="4"/>
-        <rect x="10" y="20" width="80" height="20" fill="#C9C04A" stroke="#000" stroke-width="4"/>
-        <circle cx="50" cy="55" r="6" fill="#000"/>
-      `
-      : `
-        <rect x="10" y="30" width="80" height="50" fill="none" stroke="#EBF368" stroke-width="4"/>
-        <rect x="10" y="20" width="80" height="20" fill="none" stroke="#EBF368" stroke-width="4"/>
-        <circle cx="50" cy="55" r="6" fill="none" stroke="#EBF368" stroke-width="4"/>
-      `;
+  /* TIMER PHASES */
+  const AUTO_TIME = 30;
+  const TRANSITION_TIME = 8;
+  const TELEOP_TIME = 120;
+  const ENDGAME_START = 30;
+
+  let phase = "waiting";
+  let timeLeft = 180; // total match length; we’ll override on start
+  let timer = null;
+
+  function startMatch() {
+    if (timer) clearInterval(timer);
+    phase = "auto";
+    timeLeft = AUTO_TIME + TRANSITION_TIME + TELEOP_TIME; // full match countdown
+    timer = setInterval(tick, 1000);
+    syncState();
+    updateDisplay();
   }
 
-  /* UPDATE DISPLAY FROM SCOREKEEPER */
+  function stopMatch() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    syncState();
+  }
+
+  function resetMatch() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    phase = "waiting";
+    timeLeft = AUTO_TIME + TRANSITION_TIME + TELEOP_TIME;
+    syncState();
+    updateDisplay();
+  }
+
+  function tick() {
+    if (timeLeft > 0) {
+      timeLeft--;
+    }
+
+    const elapsed = AUTO_TIME + TRANSITION_TIME + TELEOP_TIME - timeLeft;
+
+    if (elapsed < AUTO_TIME) {
+      phase = "auto";
+    } else if (elapsed < AUTO_TIME + TRANSITION_TIME) {
+      phase = "transition";
+    } else if (elapsed < AUTO_TIME + TRANSITION_TIME + TELEOP_TIME) {
+      const teleopElapsed = elapsed - (AUTO_TIME + TRANSITION_TIME);
+      if (teleopElapsed >= TELEOP_TIME - ENDGAME_START) {
+        phase = "endgame";
+      } else {
+        phase = "teleop";
+      }
+    } else {
+      phase = "ended";
+      timeLeft = 0;
+      clearInterval(timer);
+      timer = null;
+    }
+
+    syncState();
+    updateDisplay();
+  }
+
+  function syncState() {
+    localStorage.setItem("currentPeriod", phase);
+    localStorage.setItem("matchTimer", timeLeft);
+  }
+
+  /* DRAW HELPERS */
+
+  function drawPedestal(svgElement, filled, color) {
+    svgElement.innerHTML = `
+      <rect x="20" y="60" width="60" height="40" fill="none" stroke="${color}" stroke-width="6" />
+      ${filled ? `<polygon points="50,20 70,50 50,80 30,50" fill="${color}" />` : ``}
+    `;
+  }
+
+  function drawChest(svgElement, closed, color) {
+    if (closed) {
+      svgElement.innerHTML = `
+        <rect x="10" y="35" width="80" height="50" fill="${color}" stroke="#000" stroke-width="4"/>
+        <rect x="10" y="20" width="80" height="20" fill="#C9C04A" stroke="#000" stroke-width="4"/>
+        <circle cx="50" cy="60" r="6" fill="#000"/>
+      `;
+    } else {
+      svgElement.innerHTML = `
+        <rect x="10" y="35" width="80" height="50" fill="none" stroke="${color}" stroke-width="4"/>
+        <rect x="10" y="20" width="80" height="20" fill="none" stroke="${color}" stroke-width="4"/>
+        <circle cx="50" cy="60" r="6" fill="none" stroke="${color}" stroke-width="4"/>
+      `;
+    }
+  }
+
   function updateDisplay() {
     // Timer
-    const timeLeft = parseInt(localStorage.getItem("matchTimer") || "0", 10);
     const m = Math.floor(timeLeft / 60);
     const s = timeLeft % 60;
     document.getElementById("timer").textContent =
       m + ":" + (s < 10 ? "0" + s : s);
 
-    // Phase
-    const phase = localStorage.getItem("currentPeriod") || "waiting";
+    // Phase label
     const phaseNames = {
       waiting: "Waiting…",
       auto: "Autonomous",
@@ -202,48 +382,85 @@
     };
     document.getElementById("phaseLabel").textContent = phaseNames[phase] || "Waiting…";
 
-    // Scores
+    // Match label
+    const match = localStorage.getItem("currentMatch") || "?";
+    document.getElementById("matchLabel").textContent = "Match " + match;
+
+    // Scores (from scorekeeper)
     document.getElementById("redScore").textContent =
       localStorage.getItem("scoreRed") || 0;
     document.getElementById("blueScore").textContent =
       localStorage.getItem("scoreBlue") || 0;
 
-    // Match label
-    const match = localStorage.getItem("currentMatch") || "?";
-    document.getElementById("matchLabel").textContent = "Match " + match;
-
-    // Team names
+    // Teams (support both redTeams/blueTeams and red/blue arrays)
     const matches = JSON.parse(localStorage.getItem("matches") || "[]");
     const matchObj = matches.find(m => m.matchNumber == match);
 
     if (matchObj) {
+      const redTeamsArr = matchObj.redTeams || matchObj.red || [];
+      const blueTeamsArr = matchObj.blueTeams || matchObj.blue || [];
       document.getElementById("redTeams").textContent =
-        (matchObj.redTeams || []).join(" & ") || "Red Teams";
+        redTeamsArr.length ? redTeamsArr.join(" & ") : "Red Teams";
       document.getElementById("blueTeams").textContent =
-        (matchObj.blueTeams || []).join(" & ") || "Blue Teams";
+        blueTeamsArr.length ? blueTeamsArr.join(" & ") : "Blue Teams";
+    } else {
+      document.getElementById("redTeams").textContent = "Red Teams";
+      document.getElementById("blueTeams").textContent = "Blue Teams";
     }
 
-    // GEM COUNTS
-    const gemIds = [
-      "smallGem", "crystalGem", "pushGem", "moveCrystal",
-      "parkGemZone", "deliverCrystal", "colorOrientation",
-      "fillPedestals", "closeLid"
-    ];
+    // Gem counts (per alliance, from scorekeeper)
+    document.getElementById("redSmallGemCount").textContent =
+      localStorage.getItem("smallGemRedCount") || 0;
+    document.getElementById("redCrystalGemCount").textContent =
+      localStorage.getItem("crystalGemRedCount") || 0;
+    document.getElementById("blueSmallGemCount").textContent =
+      localStorage.getItem("smallGemBlueCount") || 0;
+    document.getElementById("blueCrystalGemCount").textContent =
+      localStorage.getItem("crystalGemBlueCount") || 0;
 
-    gemIds.forEach(id => {
-      document.getElementById(id + "Count").textContent =
-        localStorage.getItem(id + "Count") || 0;
-    });
+    // Pedestals (booleans per alliance, from scorekeeper)
+    const redPed1 = localStorage.getItem("redPedestal1Filled") === "true";
+    const redPed2 = localStorage.getItem("redPedestal2Filled") === "true";
+    const redPed3 = localStorage.getItem("redPedestal3Filled") === "true";
+    const bluePed1 = localStorage.getItem("bluePedestal1Filled") === "true";
+    const bluePed2 = localStorage.getItem("bluePedestal2Filled") === "true";
+    const bluePed3 = localStorage.getItem("bluePedestal3Filled") === "true";
 
-    // TREASURE BOXES
-    const treasureCount = parseInt(localStorage.getItem("treasureBoxCount") || "0", 10);
-    drawChest(document.getElementById("chest1"), treasureCount >= 1);
-    drawChest(document.getElementById("chest2"), treasureCount >= 2);
+    drawPedestal(document.getElementById("redPedestal1"), redPed1, "#FFC107");
+    drawPedestal(document.getElementById("redPedestal2"), redPed2, "#FFC107");
+    drawPedestal(document.getElementById("redPedestal3"), redPed3, "#FFC107");
+
+    drawPedestal(document.getElementById("bluePedestal1"), bluePed1, "#64B5F6");
+    drawPedestal(document.getElementById("bluePedestal2"), bluePed2, "#64B5F6");
+    drawPedestal(document.getElementById("bluePedestal3"), bluePed3, "#64B5F6");
+
+    // Chests (booleans per alliance, from scorekeeper)
+    const redChest1Closed = localStorage.getItem("redChest1Closed") === "true";
+    const redChest2Closed = localStorage.getItem("redChest2Closed") === "true";
+    const blueChest1Closed = localStorage.getItem("blueChest1Closed") === "true";
+    const blueChest2Closed = localStorage.getItem("blueChest2Closed") === "true";
+
+    drawChest(document.getElementById("redChest1"), redChest1Closed, "#FFC107");
+    drawChest(document.getElementById("redChest2"), redChest2Closed, "#FFC107");
+    drawChest(document.getElementById("blueChest1"), blueChest1Closed, "#64B5F6");
+    drawChest(document.getElementById("blueChest2"), blueChest2Closed, "#64B5F6");
   }
 
-  // Update display continuously
+  // Initial sync from any existing state
+  (function initFromStorage() {
+    const storedTime = parseInt(localStorage.getItem("matchTimer") || "0", 10);
+    const storedPhase = localStorage.getItem("currentPeriod") || "waiting";
+    if (!isNaN(storedTime) && storedTime > 0) {
+      timeLeft = storedTime;
+    } else {
+      timeLeft = AUTO_TIME + TRANSITION_TIME + TELEOP_TIME;
+    }
+    phase = storedPhase;
+    updateDisplay();
+  })();
+
+  // Continuous refresh from scorekeeper data
   setInterval(updateDisplay, 200);
-  updateDisplay();
 </script>
 
 </body>
