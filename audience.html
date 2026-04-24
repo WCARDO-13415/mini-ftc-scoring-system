@@ -181,80 +181,26 @@
       `;
   }
 
-  /* TIMER PHASES */
-  const AUTO_TIME = 30;
-  const TRANSITION_TIME = 8;
-  const TELEOP_TIME = 120;
-  const ENDGAME_START = 30;
-
-  let phase = "waiting";
-  let timeLeft = AUTO_TIME;
-  let timer = null;
-
-  function startMatch() {
-    if (timer) clearInterval(timer);
-    phase = "auto";
-    timeLeft = AUTO_TIME;
-    timer = setInterval(tick, 1000);
-    syncState();
-    updateDisplay();
-  }
-
-  function stopMatch() {
-    if (timer) clearInterval(timer);
-    timer = null;
-    syncState();
-  }
-
-  function resetMatch() {
-    if (timer) clearInterval(timer);
-    timer = null;
-    phase = "waiting";
-    timeLeft = AUTO_TIME;
-    updateDisplay();
-    syncState();
-  }
-
-  function tick() {
-    timeLeft--;
-
-    if (phase === "auto" && timeLeft <= 0) {
-      phase = "transition";
-      timeLeft = TRANSITION_TIME;
-    }
-    else if (phase === "transition" && timeLeft <= 0) {
-      phase = "teleop";
-      timeLeft = TELEOP_TIME;
-    }
-    else if (phase === "teleop" && timeLeft === ENDGAME_START) {
-      phase = "endgame";
-    }
-    else if ((phase === "teleop" || phase === "endgame") && timeLeft <= 0) {
-      phase = "ended";
-      timeLeft = 0;
-      clearInterval(timer);
-      timer = null;
-    }
-
-    updateDisplay();
-    syncState();
-  }
-
+  /* UPDATE DISPLAY FROM SCOREKEEPER */
   function updateDisplay() {
     // Timer
+    const timeLeft = parseInt(localStorage.getItem("matchTimer") || "0", 10);
     const m = Math.floor(timeLeft / 60);
     const s = timeLeft % 60;
     document.getElementById("timer").textContent =
       m + ":" + (s < 10 ? "0" + s : s);
 
-    // Phase label
-    let label = "Waiting…";
-    if (phase === "auto") label = "Autonomous";
-    if (phase === "transition") label = "Transition Period";
-    if (phase === "teleop") label = "Tele-Op";
-    if (phase === "endgame") label = "Endgame";
-    if (phase === "ended") label = "Match Ended";
-    document.getElementById("phaseLabel").textContent = label;
+    // Phase
+    const phase = localStorage.getItem("currentPeriod") || "waiting";
+    const phaseNames = {
+      waiting: "Waiting…",
+      auto: "Autonomous",
+      transition: "Transition Period",
+      teleop: "Tele-Op",
+      endgame: "Endgame",
+      ended: "Match Ended"
+    };
+    document.getElementById("phaseLabel").textContent = phaseNames[phase] || "Waiting…";
 
     // Scores
     document.getElementById("redScore").textContent =
@@ -293,11 +239,6 @@
     const treasureCount = parseInt(localStorage.getItem("treasureBoxCount") || "0", 10);
     drawChest(document.getElementById("chest1"), treasureCount >= 1);
     drawChest(document.getElementById("chest2"), treasureCount >= 2);
-  }
-
-  function syncState() {
-    localStorage.setItem("currentPeriod", phase);
-    localStorage.setItem("matchTimer", timeLeft);
   }
 
   // Update display continuously
