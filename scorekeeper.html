@@ -6,14 +6,13 @@
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: #0a0a0a;
+      background: #000;
       color: white;
       margin: 0;
       padding: 0;
       text-align: center;
     }
 
-    /* ELECTRIC STORM NAV BAR */
     nav {
       background: #000;
       padding: 15px 0;
@@ -28,7 +27,6 @@
     nav a {
       color: #EBF368;
       text-decoration: none;
-      position: relative;
       padding: 5px 10px;
       transition: 0.2s;
     }
@@ -40,120 +38,55 @@
       box-shadow: 0 0 12px #EBF368;
     }
 
-    nav a:hover::after {
-      content: "⚡";
-      position: absolute;
-      right: -18px;
-      top: 0;
-    }
-
-    h1, h2 {
+    h1 {
       margin-top: 20px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .match-button {
-      padding: 20px;
-      margin: 10px;
-      font-size: 24px;
-      border-radius: 10px;
-      background: #444;
-      color: white;
-      border: none;
-      cursor: pointer;
-      width: 60%;
-    }
-
-    .alliance-button {
-      padding: 30px;
-      margin: 20px;
-      font-size: 32px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      width: 70%;
-      color: white;
-    }
-
-    .red-alliance { background: #D32F2F; }
-    .blue-alliance { background: #1976D2; }
-
-    #phaseLabel {
-      font-size: 32px;
-      margin-bottom: 20px;
+      font-size: 40px;
       color: #EBF368;
-      text-shadow: 0 0 10px #EBF368;
     }
 
-    .score-display {
-      font-size: 32px;
-      margin: 10px;
+    .container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 30px;
+      padding: 0 40px;
     }
 
-    .big-button {
+    .panel {
+      width: 45%;
+      background: #111;
       padding: 20px;
-      margin: 10px;
-      font-size: 24px;
-      border-radius: 10px;
-      background: #424242;
-      color: white;
-      border: none;
-      cursor: pointer;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
     }
 
-    /* NEW SCORING UI */
-    .score-section {
-      margin-top: 40px;
+    .panel h2 {
       font-size: 32px;
-      color: #EBF368;
-      text-shadow: 0 0 10px #EBF368;
+      margin-bottom: 10px;
     }
 
-    .score-row {
-      display: grid;
-      grid-template-columns: 80px 1fr 80px 80px;
-      gap: 10px;
-      align-items: center;
-      margin: 15px 20px;
+    .panel.red h2 { color: #FF5252; }
+    .panel.blue h2 { color: #64B5F6; }
+
+    button {
+      width: 90%;
       padding: 15px;
-      background: #1a1a1a;
-      border-radius: 12px;
-      border: 2px solid #EBF368;
-    }
-
-    .score-btn {
-      font-size: 32px;
+      margin: 10px 0;
+      font-size: 20px;
       font-weight: bold;
-      padding: 10px;
       border-radius: 10px;
       border: none;
       cursor: pointer;
-      background: #EBF368;
-      color: black;
     }
 
-    .score-label {
-      font-size: 24px;
-      text-align: center;
-    }
-
-    .score-count {
-      font-size: 32px;
-      background: #000;
-      border: 2px solid #EBF368;
-      border-radius: 10px;
-      padding: 10px;
-      text-align: center;
-    }
+    .red-btn { background: #D32F2F; color: white; }
+    .blue-btn { background: #1976D2; color: white; }
+    .toggle-btn { background: #444; color: white; }
+    .reset-btn { background: #555; color: white; margin-top: 20px; }
   </style>
 </head>
 
 <body>
 
-  <!-- NAV BAR -->
   <nav>
     <a href="index.html">Home</a>
     <a href="scorekeeper.html">Scorekeeper</a>
@@ -162,320 +95,71 @@
     <a href="rankings.html">Rankings</a>
   </nav>
 
-  <h1>Scorekeeper</h1>
+  <h1>Scorekeeper Panel</h1>
 
-  <!-- SCREEN 1: MATCH SELECTION -->
-  <div id="matchSelectScreen">
-    <h2>Select Match</h2>
-    <div id="matchButtons"></div>
-  </div>
+  <div class="container">
 
-  <!-- SCREEN 2: ALLIANCE SELECTION -->
-  <div id="allianceSelectScreen" class="hidden">
-    <h2>Select Alliance</h2>
-    <button class="alliance-button red-alliance" onclick="chooseAlliance('red')">🔴 Red Alliance</button>
-    <button class="alliance-button blue-alliance" onclick="chooseAlliance('blue')">🔵 Blue Alliance</button>
-  </div>
+    <!-- RED ALLIANCE -->
+    <div class="panel red">
+      <h2>Red Alliance</h2>
 
-  <!-- SCREEN 3: SCORING PANEL -->
-  <div id="scoringScreen" class="hidden">
+      <button class="red-btn" onclick="add('red_smallGemDelta')">+ Small Gem</button>
+      <button class="red-btn" onclick="add('red_crystalGemDelta')">+ Big Gem</button>
 
-    <div id="phaseLabel">Waiting for Match</div>
+      <button class="toggle-btn" onclick="toggle('red_pedestal1')">Toggle Pedestal 1</button>
+      <button class="toggle-btn" onclick="toggle('red_pedestal2')">Toggle Pedestal 2</button>
+      <button class="toggle-btn" onclick="toggle('red_pedestal3')">Toggle Pedestal 3</button>
 
-    <div class="score-display">
-      Red Score: <span id="redScore">0</span> |
-      Blue Score: <span id="blueScore">0</span>
+      <button class="toggle-btn" onclick="toggle('red_chest1')">Toggle Chest 1</button>
+      <button class="toggle-btn" onclick="toggle('red_chest2')">Toggle Chest 2</button>
     </div>
 
-    <button class="big-button" onclick="startMatch()">▶ Start Match</button>
-    <button class="big-button" onclick="resetMatch()">🔄 Reset</button>
-    <button class="big-button" onclick="undo()">↩ Undo</button>
-    <button class="big-button" onclick="submitFinal()">✔ Submit Final Score</button>
+    <!-- BLUE ALLIANCE -->
+    <div class="panel blue">
+      <h2>Blue Alliance</h2>
 
-    <!-- AUTONOMOUS -->
-    <h2 class="score-section">Autonomous</h2>
+      <button class="blue-btn" onclick="add('blue_smallGemDelta')">+ Small Gem</button>
+      <button class="blue-btn" onclick="add('blue_crystalGemDelta')">+ Big Gem</button>
 
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('pushGem', 1)">+</button>
-      <div class="score-label">Push Gem</div>
-      <button class="score-btn" onclick="modify('pushGem', -1)">–</button>
-      <div class="score-count" id="pushGemCount">0</div>
-    </div>
+      <button class="toggle-btn" onclick="toggle('blue_pedestal1')">Toggle Pedestal 1</button>
+      <button class="toggle-btn" onclick="toggle('blue_pedestal2')">Toggle Pedestal 2</button>
+      <button class="toggle-btn" onclick="toggle('blue_pedestal3')">Toggle Pedestal 3</button>
 
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('moveCrystal', 1)">+</button>
-      <div class="score-label">Move Crystal</div>
-      <button class="score-btn" onclick="modify('moveCrystal', -1)">–</button>
-      <div class="score-count" id="moveCrystalCount">0</div>
-    </div>
-
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('parkGemZone', 1)">+</button>
-      <div class="score-label">Park in Gem Zone</div>
-      <button class="score-btn" onclick="modify('parkGemZone', -1)">–</button>
-      <div class="score-count" id="parkGemZoneCount">0</div>
-    </div>
-
-    <!-- DRIVER CONTROL -->
-    <h2 class="score-section">Driver Control</h2>
-
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('smallGem', 1)">+</button>
-      <div class="score-label">Small Gem</div>
-      <button class="score-btn" onclick="modify('smallGem', -1)">–</button>
-      <div class="score-count" id="smallGemCount">0</div>
-    </div>
-
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('crystalGem', 1)">+</button>
-      <div class="score-label">Crystal Gem</div>
-      <button class="score-btn" onclick="modify('crystalGem', -1)">–</button>
-      <div class="score-count" id="crystalGemCount">0</div>
-    </div>
-
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('treasureBox', 1)">+</button>
-      <div class="score-label">Treasure Box</div>
-      <button class="score-btn" onclick="modify('treasureBox', -1)">–</button>
-      <div class="score-count" id="treasureBoxCount">0</div>
-    </div>
-
-    <!-- ENDGAME -->
-    <h2 class="score-section">Endgame</h2>
-
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('deliverCrystal', 1)">+</button>
-      <div class="score-label">Deliver Crystal</div>
-      <button class="score-btn" onclick="modify('deliverCrystal', -1)">–</button>
-      <div class="score-count" id="deliverCrystalCount">0</div>
-    </div>
-
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('colorOrientation', 1)">+</button>
-      <div class="score-label">Color Orientation</div>
-      <button class="score-btn" onclick="modify('colorOrientation', -1)">–</button>
-      <div class="score-count" id="colorOrientationCount">0</div>
-    </div>
-
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('fillPedestals', 1)">+</button>
-      <div class="score-label">Fill Pedestals</div>
-      <button class="score-btn" onclick="modify('fillPedestals', -1)">–</button>
-      <div class="score-count" id="fillPedestalsCount">0</div>
-    </div>
-
-    <div class="score-row">
-      <button class="score-btn" onclick="modify('closeLid', 1)">+</button>
-      <div class="score-label">Close Lid</div>
-      <button class="score-btn" onclick="modify('closeLid', -1)">–</button>
-      <div class="score-count" id="closeLidCount">0</div>
+      <button class="toggle-btn" onclick="toggle('blue_chest1')">Toggle Chest 1</button>
+      <button class="toggle-btn" onclick="toggle('blue_chest2')">Toggle Chest 2</button>
     </div>
 
   </div>
+
+  <button class="reset-btn" onclick="resetScoring()">Reset Scoring</button>
 
 <script>
-  let matches = JSON.parse(localStorage.getItem("matches")) || [];
-  let currentMatch = null;
-  let currentAlliance = null;
-
-  let redScore = 0;
-  let blueScore = 0;
-
-  let undoStack = [];
-
-  // VISUAL COUNTERS ONLY
-  let actionCounts = {
-    pushGem: 0,
-    moveCrystal: 0,
-    parkGemZone: 0,
-    smallGem: 0,
-    crystalGem: 0,
-    treasureBox: 0,
-    deliverCrystal: 0,
-    colorOrientation: 0,
-    fillPedestals: 0,
-    closeLid: 0
-  };
-
-  // POINT VALUES STILL USED FOR ALLIANCE SCORE
-  const pointValues = {
-    pushGem: 3,
-    moveCrystal: 5,
-    parkGemZone: 2,
-    smallGem: 1,
-    crystalGem: 3,
-    treasureBox: 5,
-    deliverCrystal: 10,
-    colorOrientation: 5,
-    fillPedestals: 10,
-    closeLid: 7
-  };
-
-  // MATCH SELECTION
-  function loadMatchButtons() {
-    const container = document.getElementById("matchButtons");
-    container.innerHTML = "";
-
-    matches.forEach(m => {
-      const btn = document.createElement("button");
-      btn.className = "match-button";
-      btn.textContent = "Match " + m.matchNumber;
-      btn.onclick = () => chooseMatch(m.matchNumber);
-      container.appendChild(btn);
-    });
+  /* ADD GEM */
+  function add(key) {
+    let val = parseInt(localStorage.getItem(key) || "0", 10);
+    val++;
+    localStorage.setItem(key, val);
   }
 
-  function chooseMatch(num) {
-    currentMatch = num;
-    localStorage.setItem("currentMatch", num);
-
-    document.getElementById("matchSelectScreen").classList.add("hidden");
-    document.getElementById("allianceSelectScreen").classList.remove("hidden");
+  /* TOGGLE PED / CHEST */
+  function toggle(key) {
+    const current = localStorage.getItem(key) === "true";
+    localStorage.setItem(key, (!current).toString());
   }
 
-  function chooseAlliance(alliance) {
-    currentAlliance = alliance;
-    localStorage.setItem("currentAlliance", alliance);
+  /* RESET ALL SCORING */
+  function resetScoring() {
+    const keys = [
+      "red_smallGemDelta","red_crystalGemDelta",
+      "blue_smallGemDelta","blue_crystalGemDelta",
+      "red_pedestal1","red_pedestal2","red_pedestal3",
+      "blue_pedestal1","blue_pedestal2","blue_pedestal3",
+      "red_chest1","red_chest2",
+      "blue_chest1","blue_chest2"
+    ];
 
-    document.getElementById("allianceSelectScreen").classList.add("hidden");
-    document.getElementById("scoringScreen").classList.remove("hidden");
+    keys.forEach(k => localStorage.removeItem(k));
   }
-
-  // START MATCH (signal to audience + phase)
-  function startMatch() {
-    localStorage.setItem("currentPeriod", "auto");
-    localStorage.setItem("matchTimer", 30);
-    alert("Match started (Autonomous)!");
-  }
-
-  // SCORING
-  function modify(action, delta) {
-    const newValue = actionCounts[action] + delta;
-
-    // Prevent negative counts
-    if (newValue < 0) return;
-
-    // Save undo state
-    undoStack.push({
-      red: redScore,
-      blue: blueScore,
-      counts: JSON.parse(JSON.stringify(actionCounts))
-    });
-
-    actionCounts[action] = newValue;
-    document.getElementById(action + "Count").textContent = newValue;
-
-    // Sync this counter to localStorage
-    localStorage.setItem(action + "Count", actionCounts[action]);
-    if (action === "treasureBox") {
-      localStorage.setItem("treasureBoxCount", actionCounts["treasureBox"]);
-    }
-
-    // Update alliance score (visual counters only)
-    const pointsToAdd = delta * pointValues[action];
-
-    if (currentAlliance === "red") {
-      redScore = Math.max(0, redScore + pointsToAdd);
-    } else {
-      blueScore = Math.max(0, blueScore + pointsToAdd);
-    }
-
-    updateDisplay();
-  }
-
-  function undo() {
-    if (undoStack.length === 0) return;
-
-    const prev = undoStack.pop();
-    redScore = prev.red;
-    blueScore = prev.blue;
-    actionCounts = prev.counts;
-
-    // Update UI + localStorage
-    for (let key in actionCounts) {
-      document.getElementById(key + "Count").textContent = actionCounts[key];
-      localStorage.setItem(key + "Count", actionCounts[key]);
-    }
-    localStorage.setItem("treasureBoxCount", actionCounts["treasureBox"]);
-
-    updateDisplay();
-  }
-
-  function resetMatch() {
-    redScore = 0;
-    blueScore = 0;
-    undoStack = [];
-
-    for (let key in actionCounts) {
-      actionCounts[key] = 0;
-      document.getElementById(key + "Count").textContent = 0;
-      localStorage.setItem(key + "Count", 0);
-    }
-    localStorage.setItem("treasureBoxCount", 0);
-
-    updateDisplay();
-  }
-
-  function submitFinal() {
-    alert("Final score submitted!");
-  }
-
-  function updateDisplay() {
-    document.getElementById("redScore").textContent = redScore;
-    document.getElementById("blueScore").textContent = blueScore;
-
-    localStorage.setItem("scoreRed", redScore);
-    localStorage.setItem("scoreBlue", blueScore);
-  }
-
-  // PHASE LISTENER (from audience display)
-  setInterval(() => {
-    const phase = localStorage.getItem("currentPeriod") || "waiting";
-
-    // Update phase label
-    document.getElementById("phaseLabel").textContent =
-      phase === "auto" ? "Autonomous" :
-      phase === "transition" ? "Transition Period" :
-      phase === "teleop" ? "Tele-Op" :
-      phase === "endgame" ? "Endgame" :
-      phase === "ended" ? "Match Ended" :
-      "Waiting for Match";
-
-    // Disable everything by default
-    document.querySelectorAll(".score-row").forEach(row => row.style.opacity = 0.3);
-    document.querySelectorAll(".score-btn").forEach(btn => btn.disabled = true);
-
-    // AUTONOMOUS
-    if (phase === "auto") {
-      ["pushGem", "moveCrystal", "parkGemZone"].forEach(enableRow);
-    }
-
-    // DRIVER CONTROL
-    if (phase === "teleop") {
-      ["smallGem", "crystalGem", "treasureBox"].forEach(enableRow);
-    }
-
-    // ENDGAME
-    if (phase === "endgame") {
-      ["deliverCrystal", "colorOrientation", "fillPedestals", "closeLid"].forEach(enableRow);
-    }
-
-    // AFTER MATCH ENDS → allow corrections
-    if (phase === "ended") {
-      document.querySelectorAll(".score-row").forEach(row => row.style.opacity = 1);
-      document.querySelectorAll(".score-btn").forEach(btn => btn.disabled = false);
-    }
-
-  }, 200);
-
-  // Helper to enable a scoring row
-  function enableRow(action) {
-    const row = document.getElementById(action + "Count").parentElement;
-    row.style.opacity = 1;
-    row.querySelectorAll(".score-btn").forEach(btn => btn.disabled = false);
-  }
-
-  loadMatchButtons();
 </script>
 
 </body>
