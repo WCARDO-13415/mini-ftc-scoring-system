@@ -187,6 +187,7 @@
       Blue Score: <span id="blueScore">0</span>
     </div>
 
+    <button class="big-button" onclick="startMatch()">▶ Start Match</button>
     <button class="big-button" onclick="resetMatch()">🔄 Reset</button>
     <button class="big-button" onclick="undo()">↩ Undo</button>
     <button class="big-button" onclick="submitFinal()">✔ Submit Final Score</button>
@@ -340,6 +341,13 @@
     document.getElementById("scoringScreen").classList.remove("hidden");
   }
 
+  // START MATCH (signal to audience + phase)
+  function startMatch() {
+    localStorage.setItem("currentPeriod", "auto");
+    localStorage.setItem("matchTimer", 30);
+    alert("Match started (Autonomous)!");
+  }
+
   // SCORING
   function modify(action, delta) {
     const newValue = actionCounts[action] + delta;
@@ -356,6 +364,12 @@
 
     actionCounts[action] = newValue;
     document.getElementById(action + "Count").textContent = newValue;
+
+    // Sync this counter to localStorage
+    localStorage.setItem(action + "Count", actionCounts[action]);
+    if (action === "treasureBox") {
+      localStorage.setItem("treasureBoxCount", actionCounts["treasureBox"]);
+    }
 
     // Update alliance score (visual counters only)
     const pointsToAdd = delta * pointValues[action];
@@ -377,10 +391,12 @@
     blueScore = prev.blue;
     actionCounts = prev.counts;
 
-    // Update UI
+    // Update UI + localStorage
     for (let key in actionCounts) {
       document.getElementById(key + "Count").textContent = actionCounts[key];
+      localStorage.setItem(key + "Count", actionCounts[key]);
     }
+    localStorage.setItem("treasureBoxCount", actionCounts["treasureBox"]);
 
     updateDisplay();
   }
@@ -393,7 +409,9 @@
     for (let key in actionCounts) {
       actionCounts[key] = 0;
       document.getElementById(key + "Count").textContent = 0;
+      localStorage.setItem(key + "Count", 0);
     }
+    localStorage.setItem("treasureBoxCount", 0);
 
     updateDisplay();
   }
@@ -414,34 +432,35 @@
   setInterval(() => {
     const phase = localStorage.getItem("currentPeriod") || "waiting";
 
+    // Update phase label
     document.getElementById("phaseLabel").textContent =
       phase === "auto" ? "Autonomous" :
       phase === "transition" ? "Transition Period" :
       phase === "teleop" ? "Tele-Op" :
+      phase === "endgame" ? "Endgame" :
       phase === "ended" ? "Match Ended" :
       "Waiting for Match";
 
-    // Enable/disable scoring rows
-    const auto = phase === "auto";
-    const tele = phase === "teleop";
-
+    // Disable everything by default
     document.querySelectorAll(".score-row").forEach(row => row.style.opacity = 0.3);
     document.querySelectorAll(".score-btn").forEach(btn => btn.disabled = true);
 
-    if (auto) {
-      ["pushGem", "moveCrystal", "parkGemZone"].forEach(id => {
-        enableRow(id);
-      });
+    // AUTONOMOUS
+    if (phase === "auto") {
+      ["pushGem", "moveCrystal", "parkGemZone"].forEach(enableRow);
     }
 
-    if (tele) {
-      ["smallGem", "crystalGem", "treasureBox",
-       "deliverCrystal", "colorOrientation",
-       "fillPedestals", "closeLid"].forEach(id => {
-        enableRow(id);
-      });
+    // DRIVER CONTROL
+    if (phase === "teleop") {
+      ["smallGem", "crystalGem", "treasureBox"].forEach(enableRow);
     }
 
+    // ENDGAME
+    if (phase === "endgame") {
+      ["deliverCrystal", "colorOrientation", "fillPedestals", "closeLid"].forEach(enableRow);
+    }
+
+    // AFTER MATCH ENDS → allow corrections
     if (phase === "ended") {
       document.querySelectorAll(".score-row").forEach(row => row.style.opacity = 1);
       document.querySelectorAll(".score-btn").forEach(btn => btn.disabled = false);
@@ -449,6 +468,7 @@
 
   }, 200);
 
+  // Helper to enable a scoring row
   function enableRow(action) {
     const row = document.getElementById(action + "Count").parentElement;
     row.style.opacity = 1;
